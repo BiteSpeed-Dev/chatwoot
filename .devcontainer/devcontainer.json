@@ -7,6 +7,8 @@
     "terminal.integrated.shell.linux": "/bin/zsh"
   },
 
+  "workspaceMount": "source=${localWorkspaceFolder}/sub-folder,target=/workspace,type=bind,consistency=cached",
+  "workspaceFolder": "/workspace",
 
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [

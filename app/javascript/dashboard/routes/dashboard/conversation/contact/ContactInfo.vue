@@ -8,13 +8,13 @@
         :username="contact.name"
         :status="contact.availability_status"
       />
+
       <div class="contact--details">
         <div v-if="showAvatar" class="contact--name-wrap">
           <h3 class="sub-block-title contact--name">
             {{ contact.name }}
           </h3>
-          <!--
-					<a
+          <a
             :href="contactProfileLink"
             class="fs-default"
             target="_blank"
@@ -27,7 +27,6 @@
               color-scheme="secondary"
             />
           </a>
-					-->
         </div>
         <p v-if="additionalAttributes.description" class="contact--bio">
           {{ additionalAttributes.description }}
@@ -72,8 +71,7 @@
         </div>
       </div>
       <div class="contact-actions">
-        <!--
-				<woot-button
+        <woot-button
           v-tooltip="$t('CONTACT_PANEL.NEW_MESSAGE')"
           title="$t('CONTACT_PANEL.NEW_MESSAGE')"
           class="new-message"
@@ -81,7 +79,6 @@
           size="small"
           @click="toggleConversationModal"
         />
-				-->
         <woot-button
           v-tooltip="$t('EDIT_CONTACT.BUTTON_LABEL')"
           title="$t('EDIT_CONTACT.BUTTON_LABEL')"
@@ -103,7 +100,15 @@
           :disabled="uiFlags.isMerging"
           @click="openMergeModal"
         />
-        <!--<woot-button
+        <woot-button
+          v-tooltip="'Unsubscribe Contact'"
+          title="'Unsubscribe Contact'"
+          class="unsub-contact"
+          variant="smooth"
+          size="small"
+          @click="toggleUnsubModal"
+        />
+        <woot-button
           v-if="isAdmin"
           v-tooltip="$t('DELETE_CONTACT.BUTTON_LABEL')"
           title="$t('DELETE_CONTACT.BUTTON_LABEL')"
@@ -114,7 +119,7 @@
           color-scheme="alert"
           :disabled="uiFlags.isDeleting"
           @click="toggleDeleteModal"
-        />-->
+        />
       </div>
       <edit-contact
         v-if="showEditModal"
@@ -133,6 +138,12 @@
         :primary-contact="contact"
         :show="showMergeModal"
         @close="toggleMergeModal"
+      />
+      <unsub-contact
+        v-if="showUnsubModal"
+        :primary-contact="contact"
+        :show="showMergeModal"
+        @cancel="toggleUnsubModal"
       />
     </div>
     <woot-delete-modal
@@ -158,6 +169,7 @@ import SocialIcons from './SocialIcons';
 import EditContact from './EditContact';
 import NewConversation from './NewConversation';
 import ContactMergeModal from 'dashboard/modules/contact/ContactMergeModal';
+// import UnsubModal from './UnsubModal';
 import alertMixin from 'shared/mixins/alertMixin';
 import adminMixin from '../../../../mixins/isAdmin';
 import { mapGetters } from 'vuex';
@@ -192,6 +204,7 @@ export default {
       showEditModal: false,
       showConversationModal: false,
       showMergeModal: false,
+      showUnsubModal: false,
       showDeleteModal: false,
     };
   },
@@ -230,6 +243,9 @@ export default {
     },
   },
   methods: {
+    toggleUnsubModal() {
+      this.showUnsubModal = !this.showUnsubModal;
+    },
     toggleMergeModal() {
       this.showMergeModal = !this.showMergeModal;
     },
@@ -334,7 +350,8 @@ export default {
   .new-message,
   .edit-contact,
   .merge-contact,
-  .delete-contact {
+  .delete-contact,
+  .unsub-contact {
     margin-right: var(--space-small);
   }
 }

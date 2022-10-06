@@ -101,13 +101,16 @@
           @click="openMergeModal"
         />
         <woot-button
+          v-show="isChannelApi"
           v-tooltip="'Unsubscribe Contact'"
           title="'Unsubscribe Contact'"
           class="unsub-contact"
           variant="smooth"
           size="small"
           @click="toggleUnsubModal"
-        />
+        >
+          Unsubscribe
+        </woot-button>
         <woot-button
           v-if="isAdmin"
           v-tooltip="$t('DELETE_CONTACT.BUTTON_LABEL')"
@@ -139,10 +142,10 @@
         :show="showMergeModal"
         @close="toggleMergeModal"
       />
-      <unsub-contact
+      <unsub-modal
         v-if="showUnsubModal"
-        :primary-contact="contact"
-        :show="showMergeModal"
+        :contact="contact"
+        :show="showUnsubModal"
         @cancel="toggleUnsubModal"
       />
     </div>
@@ -169,9 +172,10 @@ import SocialIcons from './SocialIcons';
 import EditContact from './EditContact';
 import NewConversation from './NewConversation';
 import ContactMergeModal from 'dashboard/modules/contact/ContactMergeModal';
-// import UnsubModal from './UnsubModal';
+import UnsubModal from './UnsubModal';
 import alertMixin from 'shared/mixins/alertMixin';
 import adminMixin from '../../../../mixins/isAdmin';
+import channelAPIMixin from '../../../../mixins/isChannelAPI';
 import { mapGetters } from 'vuex';
 import { getCountryFlag } from 'dashboard/helper/flag';
 
@@ -183,8 +187,9 @@ export default {
     SocialIcons,
     NewConversation,
     ContactMergeModal,
+    UnsubModal,
   },
-  mixins: [alertMixin, adminMixin, clickaway],
+  mixins: [alertMixin, adminMixin, clickaway, channelAPIMixin],
   props: {
     contact: {
       type: Object,
@@ -209,7 +214,9 @@ export default {
     };
   },
   computed: {
-    ...mapGetters({ uiFlags: 'contacts/getUIFlags' }),
+    ...mapGetters({
+      uiFlags: 'contacts/getUIFlags',
+    }),
     contactProfileLink() {
       return `/app/accounts/${this.$route.params.accountId}/contacts/${this.contact.id}`;
     },

@@ -101,7 +101,7 @@
           @click="openMergeModal"
         />
         <woot-button
-          v-show="isChannelApi"
+          v-show="contact.phone_number.length > 0"
           v-tooltip="'Unsubscribe Contact'"
           title="'Unsubscribe Contact'"
           class="unsub-contact"

@@ -54,16 +54,17 @@ export default {
     onClose() {
       this.$emit('cancel');
     },
-    onConfirm() {
+    async onConfirm() {
       if (this.contact.phone_number) {
         const body = {
           accountId: this.currentAccountId,
           phoneNumber: this.contact.phone_number,
         };
-        axios.post(
+        await axios.post(
           'https://app.bitespeed.co/cxIntegrations/chatwoot/unsubscribe',
           body
         );
+        bus.$emit('newToastMessage', 'Contact Unsubscribed');
         this.onClose();
       } else {
         this.onClose();

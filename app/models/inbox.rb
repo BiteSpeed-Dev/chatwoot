@@ -77,6 +77,10 @@ class Inbox < ApplicationRecord
     channel_type == 'Channel::FacebookPage'
   end
 
+  def instagram?
+    facebook? && channel.instagram_id.present?
+  end
+
   def web_widget?
     channel_type == 'Channel::WebWidget'
   end
@@ -99,6 +103,10 @@ class Inbox < ApplicationRecord
 
   def whatsapp?
     channel_type == 'Channel::Whatsapp'
+  end
+
+  def active_bot?
+    agent_bot_inbox&.active? || hooks.pluck(:app_id).include?('dialogflow')
   end
 
   def inbox_type

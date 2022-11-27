@@ -64,6 +64,7 @@ export default {
           phoneNumber: this.contact.phone_number,
         };
         this.onClose();
+        this.showAlert('Unsubscribing contact');
         try {
           await axios.post(
             'https://app.bitespeed.co/cxIntegrations/chatwoot/unsubscribe',

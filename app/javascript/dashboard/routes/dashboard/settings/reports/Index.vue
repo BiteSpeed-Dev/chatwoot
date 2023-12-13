@@ -107,7 +107,11 @@ export default {
         fromUnixTime(to),
         'dd-MM-yyyy'
       )}.csv`;
-      this.$store.dispatch('downloadAgentReports', { from, to, fileName });
+      this.$store.dispatch('downloadAgentReports', {
+        from,
+        to,
+        fileName,
+      });
     },
     onFilterChange({ from, to, groupBy, businessHours }) {
       this.from = from;

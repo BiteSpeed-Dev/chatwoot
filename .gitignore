@@ -51,6 +51,7 @@ coverage
 # ignore packages
 node_modules
 package-lock.json
+.yarn
 
 *.dump
 

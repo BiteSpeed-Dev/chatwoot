@@ -50,6 +50,8 @@ export default {
       from: 0,
       to: 0,
       groupBy: GROUP_BY_FILTER[1],
+      groupByfilterItemsList: this.$t('REPORT.GROUP_BY_DAY_OPTIONS'),
+      selectedGroupByFilter: null,
       businessHours: false,
     };
   },
@@ -102,7 +104,9 @@ export default {
       };
     },
     downloadAgentReports() {
-      const { from, to } = this;
+      const { from, to, groupBy, businessHours } = this;
+      // eslint-disable-next-line no-console
+      console.log('--> groupBy', groupBy);
       const fileName = `agent-report-${format(
         fromUnixTime(to),
         'dd-MM-yyyy'
@@ -111,6 +115,8 @@ export default {
         from,
         to,
         fileName,
+        groupBy: groupBy?.period,
+        businessHours,
       });
     },
     onFilterChange({ from, to, groupBy, businessHours }) {

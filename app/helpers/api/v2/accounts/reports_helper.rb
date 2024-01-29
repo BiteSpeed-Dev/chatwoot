@@ -7,8 +7,9 @@ module Api::V2::Accounts::ReportsHelper # rubocop:disable Metrics/ModuleLength
   end
 
   def generate_detailed_agents_report # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
+    Rails.logger.info "details #{params[:group_by]}"
     rows = []
-    agent_reports = Current.account.users.each_with_object({}) do |agent, reports| 
+    agent_reports = Current.account.users.each_with_object({}) do |agent, reports|
       reports[agent.name] = generate_detailed_report({ type: :agent, id: agent.id })
     end
   
@@ -17,7 +18,7 @@ module Api::V2::Accounts::ReportsHelper # rubocop:disable Metrics/ModuleLength
   
     sample_agent_report.each_key do |metric|
       # Add metric name as a separate row
-      rows << [metric.to_s]
+      rows << [metric.to_s.titleize]
       
       # Prepare header row with dates
       header_row = ['Date/Person']

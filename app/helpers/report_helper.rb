@@ -20,6 +20,10 @@ module ReportHelper
     (get_grouped_values conversations).count
   end
 
+  def unattended_conversations_count
+    (get_grouped_values conversations.open.unattended).count
+  end
+
   def incoming_messages_count
     (get_grouped_values incoming_messages).count
   end

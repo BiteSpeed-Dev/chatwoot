@@ -7,7 +7,7 @@ module Api::V2::Accounts::ReportsHelper # rubocop:disable Metrics/ModuleLength
   end
 
   def generate_detailed_agents_report # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
-    Rails.logger.info "details #{params[:group_by]}"
+    time_metrics = %w[avg_first_response_time avg_resolution_time reply_time]
     rows = []
     agent_reports = Current.account.users.each_with_object({}) do |agent, reports|
       reports[agent.name] = generate_detailed_report({ type: :agent, id: agent.id })
@@ -18,10 +18,14 @@ module Api::V2::Accounts::ReportsHelper # rubocop:disable Metrics/ModuleLength
   
     sample_agent_report.each_key do |metric|
       # Add metric name as a separate row
-      rows << [metric.to_s.titleize]
+      if time_metrics.include?(metric.to_s)
+        rows << [metric.to_s.titleize + ' (in minutes)']
+      else
+        rows << [metric.to_s.titleize]
+      end
       
       # Prepare header row with dates
-      header_row = ['Date/Person']
+      header_row = ['Date']
       header_row.concat(agent_reports.keys)
       rows << header_row
   
@@ -38,7 +42,7 @@ module Api::V2::Accounts::ReportsHelper # rubocop:disable Metrics/ModuleLength
           rows << group_by_row
         end
       end
-  
+
       # Add empty row for separation
       rows << []
     end

@@ -50,6 +50,9 @@ en:
     data_import:
       data_type:
         invalid: Invalid data type
+    reports:
+      agent_report:
+        success: We will notify you once agent reports export file is ready to view.
     contacts:
       import:
         failed: File is blank

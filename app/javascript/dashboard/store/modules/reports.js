@@ -198,9 +198,8 @@ export const actions = {
   },
   downloadAgentReports(_, reportObj) {
     return Report.getAgentReports(reportObj)
-      .then(response => {
-        downloadCsvFile(reportObj.fileName, response.data);
-        AnalyticsHelper.track(REPORTS_EVENTS.DOWNLOAD_REPORT, {
+      .then(() => {
+        AnalyticsHelper.track(REPORTS_EVENTS.EMAIL_REPORT, {
           reportType: 'agent',
           businessHours: reportObj?.businessHours,
         });

@@ -413,4 +413,73 @@ describe V2::ReportBuilder do
       end
     end
   end
+
+  describe '#detailed_report' do
+    let(:user) { create(:user, account: account) }
+
+    before do
+      travel_to(Time.zone.today) do
+        inbox = create(:inbox, account: account)
+        create(:inbox_member, user: user, inbox: inbox)
+
+        gravatar_url = 'https://www.gravatar.com'
+        stub_request(:get, /#{gravatar_url}.*/).to_return(status: 404)
+
+        perform_enqueued_jobs do
+          10.times do
+            conversation = create(:conversation, account: account,
+                                                 inbox: inbox, assignee: user,
+                                                 created_at: Time.zone.today)
+            create_list(:message, 5, message_type: 'outgoing',
+                                     account: account, inbox: inbox,
+                                     conversation: conversation, created_at: Time.zone.today + 2.hours)
+            create_list(:message, 2, message_type: 'incoming',
+                                     account: account, inbox: inbox,
+                                     conversation: conversation,
+                                     created_at: Time.zone.today + 3.hours)
+            conversation.update_labels('label_1')
+            conversation.label_list
+            conversation.save!
+          end
+
+          5.times do
+            conversation = create(:conversation, account: account,
+                                                 inbox: inbox, assignee: user,
+                                                 created_at: (Time.zone.today - 2.days))
+            create_list(:message, 3, message_type: 'outgoing',
+                                     account: account, inbox: inbox,
+                                     conversation: conversation,
+                                     created_at: (Time.zone.today - 2.days))
+            create_list(:message, 1, message_type: 'incoming',
+                                     account: account, inbox: inbox,
+                                     conversation: conversation,
+                                     created_at: (Time.zone.today - 2.days))
+            conversation.update_labels('label_2')
+            conversation.label_list
+            conversation.save!
+          end
+        end
+      end
+    end
+
+    context 'when report type is agent' do
+      it 'returns detailed report for the last 4 days' do
+        params = {
+          id: user.id,
+          type: :agent,
+          since: (Time.zone.today - 3.days).to_time.to_i.to_s,
+          until: Time.zone.today.end_of_day.to_time.to_i.to_s,
+          group_by: 'day'
+        }
+
+        builder = described_class.new(account, params)
+        metrics = builder.detailed_report
+
+        expect(metrics.keys.count).to be(V2::ReportBuilder::REPORT_METRICS.count)
+        expect(metrics.keys.sort).to eq(V2::ReportBuilder::REPORT_METRICS.map(&:to_sym).sort)
+        expect(metrics[V2::ReportBuilder::REPORT_METRICS.sample.to_sym].count).to be 4
+        expect(metrics[:conversations_count].second[:value]).to be 5 # specific metric
+      end
+    end
+  end
 end

@@ -102,12 +102,13 @@ export default {
       };
     },
     downloadAgentReports() {
-      const { from, to } = this;
-      const fileName = `agent-report-${format(
-        fromUnixTime(to),
-        'dd-MM-yyyy'
-      )}.csv`;
-      this.$store.dispatch('downloadAgentReports', { from, to, fileName });
+      const { from, to, groupBy, businessHours } = this;
+      this.$store.dispatch('downloadAgentReports', {
+        from,
+        to,
+        groupBy: groupBy?.period,
+        businessHours,
+      });
     },
     onFilterChange({ from, to, groupBy, businessHours }) {
       this.from = from;

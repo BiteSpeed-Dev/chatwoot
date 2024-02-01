@@ -19,8 +19,15 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
   end
 
   def agents
-    @report_data = generate_agents_report
-    generate_csv('agents_report', 'api/v2/accounts/reports/agents')
+    report_params = {
+      since: params[:since],
+      until: params[:until],
+      group_by: params[:group_by],
+      business_hours: ActiveModel::Type::Boolean.new.cast(params[:business_hours]),
+      email: Current.account_user.user.email || Current.account.administrators.pluck(:email)
+    }
+    Reports::GenerateDetailedAgentReportsJob.perform_later(Current.account.id, report_params)
+    head :ok, message: I18n.t('errors.reports.agent_report.success')
   end
 
   def inboxes

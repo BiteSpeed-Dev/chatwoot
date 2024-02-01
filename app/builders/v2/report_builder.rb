@@ -14,21 +14,23 @@ class V2::ReportBuilder
     @timezone = ActiveSupport::TimeZone[timezone_offset]&.name
   end
 
-  def timeseries
-    return send(params[:metric]) if metric_valid?
+  def timeseries(metric = nil)
+    report_metric = params[:metric] || metric
+    return send(report_metric) if metric_valid?(report_metric)
 
-    Rails.logger.error "ReportBuilder: Invalid metric - #{params[:metric]}"
+    Rails.logger.error "ReportBuilder: Invalid metric - #{report_metric}"
     {}
   end
 
   # For backward compatible with old report
-  def build
-    if %w[avg_first_response_time avg_resolution_time reply_time].include?(params[:metric])
-      timeseries.each_with_object([]) do |p, arr|
+  def build(metric = nil)
+    report_metric = params[:metric] || metric
+    if %w[avg_first_response_time avg_resolution_time reply_time].include?(report_metric)
+      timeseries(report_metric).each_with_object([]) do |p, arr|
         arr << { value: p[1], timestamp: p[0].in_time_zone(@timezone).to_i, count: @grouped_values.count[p[0]] }
       end
     else
-      timeseries.each_with_object([]) do |p, arr|
+      timeseries(report_metric).each_with_object([]) do |p, arr|
         arr << { value: p[1], timestamp: p[0].in_time_zone(@timezone).to_i }
       end
     end
@@ -62,16 +64,31 @@ class V2::ReportBuilder
     end
   end
 
+  def detailed_report
+    {
+      conversation_count: build('conversations_count'),
+      unattended_conversations_count: build('unattended_conversations_count'),
+      incoming_messages_count: build('incoming_messages_count'),
+      outgoing_messages_count: build('outgoing_messages_count'),
+      avg_first_response_time: build('avg_first_response_time'),
+      avg_resolution_time: build('avg_resolution_time'),
+      resolutions_count: build('resolutions_count'),
+      reply_time: build('reply_time')
+    }
+  end
+
   private
 
-  def metric_valid?
+  def metric_valid?(metric = nil)
+    report_metric = params[:metric] || metric
     %w[conversations_count
+       unattended_conversations_count
        incoming_messages_count
        outgoing_messages_count
        avg_first_response_time
        avg_resolution_time reply_time
        resolutions_count
-       reply_time].include?(params[:metric])
+       reply_time].include?(report_metric)
   end
 
   def inbox

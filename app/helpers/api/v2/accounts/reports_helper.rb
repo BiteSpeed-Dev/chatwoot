@@ -6,6 +6,14 @@ module Api::V2::Accounts::ReportsHelper
     end
   end
 
+  def generate_detailed_agents_report
+    agent_reports = Current.account.users.each_with_object({}) do |agent, reports|
+      reports[agent.name] = generate_detailed_report({ type: :agent, id: agent.id })
+    end
+  
+    Reports::ExportableAgentReportPresenter.new(agent_reports, params).csv_rows
+  end
+
   def generate_inboxes_report
     Current.account.inboxes.map do |inbox|
       inbox_report = generate_report({ type: :inbox, id: inbox.id })
@@ -38,6 +46,20 @@ module Api::V2::Accounts::ReportsHelper
         }
       )
     ).short_summary
+  end
+
+  def generate_detailed_report(report_params)
+    V2::ReportBuilder.new(
+      Current.account,
+      report_params.merge(
+        {
+          since: params[:since],
+          until: params[:until],
+          group_by: params[:group_by],
+          business_hours: ActiveModel::Type::Boolean.new.cast(params[:business_hours])
+        }
+      )
+    ).detailed_report
   end
 
   private

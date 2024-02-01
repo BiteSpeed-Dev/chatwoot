@@ -126,7 +126,7 @@ export default {
       });
     },
     downloadReports() {
-      const { from, to, type, businessHours } = this;
+      const { from, to, type, groupBy, businessHours } = this;
       const dispatchMethods = {
         agent: 'downloadAgentReports',
         label: 'downloadLabelReports',
@@ -135,7 +135,13 @@ export default {
       };
       if (dispatchMethods[type]) {
         const fileName = generateFileName({ type, to, businessHours });
-        const params = { from, to, fileName, businessHours };
+        const params = {
+          from,
+          to,
+          fileName,
+          groupBy: groupBy.period,
+          businessHours,
+        };
         this.$store.dispatch(dispatchMethods[type], params);
       }
     },

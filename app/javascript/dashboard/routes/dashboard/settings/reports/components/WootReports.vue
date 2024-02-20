@@ -13,10 +13,12 @@
       v-if="filterItemsList"
       :type="type"
       :filter-items-list="filterItemsList"
+      :secondary-filter-items-list="secondaryFilterItemsList"
       :group-by-filter-items-list="groupByfilterItemsList"
       :selected-group-by-filter="selectedGroupByFilter"
       @date-range-change="onDateRangeChange"
       @filter-change="onFilterChange"
+      @secondary-filter-change="onSecondaryFilterChange"
       @group-by-filter-change="onGroupByFilterChange"
       @business-hours-toggle="onBusinessHoursToggle"
     />
@@ -27,7 +29,7 @@
 <script>
 import ReportFilters from './ReportFilters.vue';
 import ReportContainer from '../ReportContainer.vue';
-import { GROUP_BY_FILTER } from '../constants';
+import { INBOX_FILTER_DEFAULT, GROUP_BY_FILTER } from '../constants';
 import reportMixin from '../../../../../mixins/reportMixin';
 import { generateFileName } from '../../../../../helper/downloadHelper';
 import { REPORTS_EVENTS } from '../../../../../helper/AnalyticsHelper/events';
@@ -75,6 +77,7 @@ export default {
       from: 0,
       to: 0,
       selectedFilter: null,
+      selectedSecondaryFilter: null,
       groupBy: GROUP_BY_FILTER[1],
       groupByfilterItemsList: this.$t('REPORT.GROUP_BY_DAY_OPTIONS'),
       selectedGroupByFilter: null,
@@ -84,6 +87,12 @@ export default {
   computed: {
     filterItemsList() {
       return this.$store.getters[this.getterKey] || [];
+    },
+    secondaryFilterItemsList() {
+      const defaultInboxFilter = { name: INBOX_FILTER_DEFAULT, id: -1 };
+      return (
+        [defaultInboxFilter, ...this.$store.getters['agents/getInboxes']] || []
+      );
     },
   },
   mounted() {
@@ -98,6 +107,7 @@ export default {
           to,
           type: this.type,
           id: this.selectedFilter.id,
+          secondaryFilterId: this.selectedSecondaryFilter?.id,
           groupBy: groupBy.period,
           businessHours,
         });
@@ -122,6 +132,7 @@ export default {
             to,
             type: this.type,
             id: this.selectedFilter.id,
+            secondaryFilterId: this.selectedSecondaryFilter?.id,
             groupBy: groupBy.period,
             businessHours,
           });
@@ -170,6 +181,12 @@ export default {
     onFilterChange(payload) {
       if (payload) {
         this.selectedFilter = payload;
+        this.fetchAllData();
+      }
+    },
+    onSecondaryFilterChange(payload) {
+      if (payload) {
+        this.selectedSecondaryFilter = payload;
         this.fetchAllData();
       }
     },

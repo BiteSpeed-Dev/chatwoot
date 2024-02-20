@@ -3,6 +3,7 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
   include Api::V2::Accounts::HeatmapHelper
 
   before_action :check_authorization
+  before_action :filter_secondary_filter_params, only: %i[index summary]
 
   def index
     builder = V2::Reports::Conversations::ReportBuilder.new(Current.account, report_params)
@@ -82,25 +83,33 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
     common_params.merge({
                           since: range[:current][:since],
                           until: range[:current][:until],
-                          timezone_offset: params[:timezone_offset]
-                        })
+                          timezone_offset: params[:timezone_offset],
+                          inbox_id: params[:secondary_filter_id] ## secondary_filter_id passed along when param[:type] = agent is inbox_id
+                          }.compact)
   end
 
   def previous_summary_params
     common_params.merge({
                           since: range[:previous][:since],
                           until: range[:previous][:until],
-                          timezone_offset: params[:timezone_offset]
-                        })
+                          timezone_offset: params[:timezone_offset],
+                          inbox_id: params[:secondary_filter_id] ## secondary_filter_id passed along when param[:type] = agent is inbox_id
+                          }.compact)
   end
 
   def report_params
     common_params.merge({
-                          metric: params[:metric],
-                          since: params[:since],
-                          until: params[:until],
-                          timezone_offset: params[:timezone_offset]
-                        })
+      metric: params[:metric],
+      since: params[:since],
+      until: params[:until],
+      timezone_offset: params[:timezone_offset],
+      inbox_id: params[:secondary_filter_id] ## secondary_filter_id passed along when param[:type] = agent is inbox_id
+    }.compact)
+  end
+
+  def filter_secondary_filter_params
+    # Rejects `secondary_filter_id` if it's not a positive integer
+    params.delete(:secondary_filter_id) unless params[:secondary_filter_id].to_i.positive?
   end
 
   def conversation_params

@@ -120,6 +120,24 @@
           @input="changeFilterSelection"
         />
       </div>
+      <!-- secondary inbox filter for agents -->
+      <div
+        v-if="type === 'agent'"
+        class="md:w-[240px] w-full multiselect-wrap--small">
+        <p class="text-xs mb-2 font-medium">
+          {{ $t('INBOX_REPORTS.FILTER_DROPDOWN_LABEL') }}
+        </p>
+        <multiselect
+          v-model="currentSelectedSecondaryFilter"
+          :placeholder="$t('INBOX_REPORTS.FILTER_DROPDOWN_LABEL')"
+          label="name"
+          track-by="id"
+          :options="secondaryFilterItemsList"
+          :option-height="24"
+          :show-labels="false"
+          @input="changeSecondaryFilterSelection"
+        />
+      </div>
       <div class="mx-1 md:w-[240px] w-full multiselect-wrap--small">
         <p class="text-xs mb-2 font-medium">
           {{ $t('REPORT.DURATION_FILTER_LABEL') }}
@@ -200,6 +218,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    secondaryFilterItemsList: {
+      type: Array,
+      default: () => [],
+    },
     groupByFilterItemsList: {
       type: Array,
       default: () => [],
@@ -216,6 +238,7 @@ export default {
   data() {
     return {
       currentSelectedFilter: null,
+      currentSelectedSecondaryFilter: null,
       currentDateRangeSelection: this.$t('REPORT.DATE_RANGE')[0],
       dateRange: this.$t('REPORT.DATE_RANGE'),
       customDateRange: [new Date(), new Date()],
@@ -285,6 +308,10 @@ export default {
     businessHoursSelected() {
       this.$emit('business-hours-toggle', this.businessHoursSelected);
     },
+    secondaryFilterItemsList(val) {
+      this.currentSelectedSecondaryFilter = val[0];
+      this.changeSecondaryFilterSelection();
+    },
   },
   mounted() {
     this.onDateRangeChange();
@@ -309,6 +336,12 @@ export default {
     },
     changeFilterSelection() {
       this.$emit('filter-change', this.currentSelectedFilter);
+    },
+    changeSecondaryFilterSelection() {
+      this.$emit(
+        'secondary-filter-change',
+        this.currentSelectedSecondaryFilter
+      );
     },
     onChange(value) {
       this.customDateRange = value;

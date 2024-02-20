@@ -21,6 +21,8 @@ export const formatTime = timeInSeconds => {
   return `${days}d`;
 };
 
+export const INBOX_FILTER_DEFAULT = '🚫';
+
 export const GROUP_BY_FILTER = {
   1: { id: 1, period: 'day' },
   2: { id: 2, period: 'week' },

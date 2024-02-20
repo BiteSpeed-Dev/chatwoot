@@ -4,6 +4,10 @@ export const set = (state, data) => {
   state.records = data;
 };
 
+export const setSecondary = (state, data) => {
+  state.secondaryRecords = data;
+}
+
 export const create = (state, data) => {
   state.records.push(data);
 };

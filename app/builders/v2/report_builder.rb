@@ -1,6 +1,8 @@
 class V2::ReportBuilder
+  include ScopeHelper
   include DateRangeHelper
   include ReportHelper
+  include ReportSummaryMetricsHelper
   attr_reader :account, :params
 
   DEFAULT_GROUP_BY = 'day'.freeze

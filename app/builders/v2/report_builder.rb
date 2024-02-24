@@ -3,6 +3,13 @@ class V2::ReportBuilder
   include ReportHelper
   attr_reader :account, :params
 
+  TIME_METRICS = %w[avg_first_response_time avg_resolution_time reply_time].freeze
+  REPORT_METRICS = (TIME_METRICS + %w[conversations_count
+                                      unattended_conversations_count
+                                      incoming_messages_count
+                                      outgoing_messages_count
+                                      resolutions_count]).freeze
+
   DEFAULT_GROUP_BY = 'day'.freeze
   AGENT_RESULTS_PER_PAGE = 25
 
@@ -66,7 +73,7 @@ class V2::ReportBuilder
 
   def detailed_report
     {
-      conversation_count: build('conversations_count'),
+      conversations_count: build('conversations_count'),
       unattended_conversations_count: build('unattended_conversations_count'),
       incoming_messages_count: build('incoming_messages_count'),
       outgoing_messages_count: build('outgoing_messages_count'),
@@ -81,14 +88,7 @@ class V2::ReportBuilder
 
   def metric_valid?(metric = nil)
     report_metric = params[:metric] || metric
-    %w[conversations_count
-       unattended_conversations_count
-       incoming_messages_count
-       outgoing_messages_count
-       avg_first_response_time
-       avg_resolution_time reply_time
-       resolutions_count
-       reply_time].include?(report_metric)
+    REPORT_METRICS.include?(report_metric)
   end
 
   def inbox

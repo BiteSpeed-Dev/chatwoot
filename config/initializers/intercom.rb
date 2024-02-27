@@ -1,7 +1,7 @@
 IntercomRails.config do |config|
   # == Intercom app_id
   #
-  config.app_id = ENV["INTERCOM_APP_ID"] || "umzi6wy2"
+  config.app_id = ENV['INTERCOM_APP_ID'] || 'umzi6wy2'
 
   # == Intercom session_duration
   #
@@ -15,7 +15,7 @@ IntercomRails.config do |config|
   # == Enabled Environments
   # Which environments is auto inclusion of the Javascript enabled for
   #
-  config.enabled_environments = ["development", "production"]
+  config.enabled_environments = %w[development production]
 
   # == Current user method/variable
   # The method/variable that contains the logged in user in your controllers.
@@ -52,17 +52,21 @@ IntercomRails.config do |config|
   # You can provide either a method name which will be sent to the current
   # user object, or a Proc which will be passed the current user.
   #
-  # config.user.custom_data = {
-  #   :shop_domain => Proc.new { |current_user| current_user.account_users.first.account.domain },
-  #   :shop_name => Proc.new { |current_user| current_user.account_users.first.account.name },
-  # }
+  config.user.custom_data = {
+    :user_type => proc { |current_user| current_user.type },
+    :user_auth_provider => proc { |current_user| current_user.provider }
+  }
 
   # == Current company method/variable
   # The method/variable that contains the current company for the current user,
   # in your controllers. 'Companies' are generic groupings of users, so this
   # could be a company, app or group.
   #
-  config.company.current = Proc.new { Current.account }
+  config.company.current = proc {
+    ## This drops us in `DashboardController#index` and so there isn't much in the way of getting current account
+    account_id = params[:params].split('/')[1].to_i ## when URLs are of form `accounts/<account_id>/blah`
+    current_user.accounts.find(account_id)
+  }
   #
   # Or if you are using devise you can just use the following config
   #
@@ -79,8 +83,10 @@ IntercomRails.config do |config|
   # This works the same as User custom data above.
   #
   config.company.custom_data = {
-    :shop_domain => Proc.new { Current.account.domain },
-    :shop_name => Proc.new { Current.account.name },
+    :company_website => proc { |current_company| current_company.domain },
+    :shop_domain => proc { |current_company| current_company.domain },
+    :shop_name => proc { |current_company| current_company.name },
+    :shop_support_email => proc { |current_company| current_company.support_email }
   }
 
   # == Company Plan name

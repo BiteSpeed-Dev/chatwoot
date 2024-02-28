@@ -65,7 +65,8 @@ IntercomRails.config do |config|
   config.company.current = proc {
     ## This drops us in `DashboardController#index` and so there isn't much in the way of getting current account
     account_id = params[:params].split('/')[1].to_i ## when URLs are of form `accounts/<account_id>/blah`
-    current_user.accounts.find(account_id)
+    account = current_user.accounts.find(account_id)
+    Struct.new(:id, :name, :company_website, :support_email).new(account.id, account.name, account.domain, account.support_email)
   }
   #
   # Or if you are using devise you can just use the following config
@@ -83,8 +84,7 @@ IntercomRails.config do |config|
   # This works the same as User custom data above.
   #
   config.company.custom_data = {
-    :company_website => proc { |current_company| current_company.domain },
-    :shop_domain => proc { |current_company| current_company.domain },
+    :shop_domain => proc { |current_company| current_company.company_website },
     :shop_name => proc { |current_company| current_company.name },
     :shop_support_email => proc { |current_company| current_company.support_email }
   }

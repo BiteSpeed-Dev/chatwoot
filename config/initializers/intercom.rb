@@ -1,3 +1,6 @@
+require 'uri'
+require 'net/http'
+
 IntercomRails.config do |config|
   # == Intercom app_id
   #
@@ -65,8 +68,13 @@ IntercomRails.config do |config|
   config.company.current = proc {
     ## This drops us in `DashboardController#index` and so there isn't much in the way of getting current account
     account_id = params[:params].split('/')[1].to_i ## when URLs are of form `accounts/<account_id>/blah`
-    account = current_user.accounts.find(account_id)
-    Struct.new(:id, :name, :company_website, :support_email).new(account.id, account.name, account.domain, account.support_email)
+
+    uri = URI("https://b3i4zxcefi.execute-api.us-east-1.amazonaws.com/accountDetails/#{account_id}")
+    res = Net::HTTP.get_response(uri)
+
+    account = JSON.parse(res.body)['accountDetails']
+
+    Struct.new(:id, :name, :company_website).new(account['accountId'], account['accountName'], account['shopUrl'])
   }
   #
   # Or if you are using devise you can just use the following config
@@ -84,9 +92,8 @@ IntercomRails.config do |config|
   # This works the same as User custom data above.
   #
   config.company.custom_data = {
-    :shop_domain => proc { |current_company| current_company.company_website },
-    :shop_name => proc { |current_company| current_company.name },
-    :shop_support_email => proc { |current_company| current_company.support_email }
+    :shop_url => proc { |current_company| current_company.company_website },
+    :shop_name => proc { |current_company| current_company.name }
   }
 
   # == Company Plan name
@@ -118,7 +125,8 @@ IntercomRails.config do |config|
   # If you'd like to hide default launcher button uncomment this line
   # config.hide_default_launcher = true
   #
-  # If you need to route your Messenger requests through a different endpoint than the default, uncomment the below line. Generally speaking, this is not needed.
+  # If you need to route your Messenger requests through a different endpoint than the default, uncomment the below line. Generally speaking,
+  # this is not needed.
   # config.api_base = "https://#{config.app_id}.intercom-messenger.com"
   #
 end

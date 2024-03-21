@@ -1,7 +1,7 @@
 class V2::Reports::Agents::AverageFirstResponseTimeBuilder
   include DateRangeHelper
 
-  pattr_initialize [:account, :business_hours, :since, :until]
+  pattr_initialize [:account, :params]
 
   def perform
     agents.map do |agent|
@@ -21,7 +21,7 @@ class V2::Reports::Agents::AverageFirstResponseTimeBuilder
   end
 
   def grouped_average_first_response
-    value_attribute = business_hours ? 'value_in_business_hours' : 'value'
+    value_attribute = params[:business_hours] ? 'value_in_business_hours' : 'value'
     reporting_events.where(name: 'first_response')
                     .where.not(user_id: nil)
                     .select("DATE(created_at) as created_date, user_id, AVG(#{value_attribute}) as avg_first_response")
@@ -32,7 +32,7 @@ class V2::Reports::Agents::AverageFirstResponseTimeBuilder
   def average_first_response_by_date_user
     @average_first_response_by_date_user ||= grouped_average_first_response.each_with_object({}) do |result, hash|
       hash[result.user_id] ||= {}
-      hash[result.user_id][result.created_at] = result.average_value
+      hash[result.user_id][result.created_date] = result.avg_first_response
     end
   end
 

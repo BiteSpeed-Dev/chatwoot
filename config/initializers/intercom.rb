@@ -25,7 +25,12 @@ IntercomRails.config do |config|
   # If it is `current_user` or `@user`, then you can ignore this
   #
   # config.user.current = Proc.new { current_user }
-  # config.user.current = [Proc.new { current_user }]
+  config.user.current = [
+    proc { @super_admin },
+    proc { current_user },
+    proc { current_admin },
+    proc { current_super_admin }
+  ]
 
   # == Include for logged out Users
   # If set to true, include the Intercom messenger on all pages, regardless of whether
@@ -48,7 +53,7 @@ IntercomRails.config do |config|
   # A Proc that given a user returns true if the user should be excluded
   # from imports and Javascript inclusion, false otherwise.
   #
-  # config.user.exclude_if = Proc.new { |user| user.deleted? }
+  config.user.exclude_if = proc { |user| user.type == 'SuperAdmin'}
 
   # == User Custom Data
   # A hash of additional data you wish to send about your users.

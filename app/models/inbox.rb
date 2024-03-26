@@ -19,6 +19,7 @@
 #  name                          :string           not null
 #  out_of_office_message         :string
 #  sender_name_type              :integer          default("friendly"), not null
+#  ticketing_interval            :integer          default(0)
 #  timezone                      :string           default("UTC")
 #  working_hours_enabled         :boolean          default(FALSE)
 #  created_at                    :datetime         not null

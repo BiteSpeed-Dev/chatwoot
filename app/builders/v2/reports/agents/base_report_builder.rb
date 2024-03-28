@@ -25,6 +25,10 @@ class V2::Reports::Agents::BaseReportBuilder
 
   private
 
+  def agents
+    @agents ||= account.users.order_by_full_name
+  end
+
   def get_grouped_values(relation)
     @grouped_values = relation.group_by_period(
       params[:group_by] || DEFAULT_GROUP_BY,

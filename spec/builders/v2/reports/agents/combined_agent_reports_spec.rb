@@ -11,15 +11,14 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
   let(:user) { create(:user, account: account, name: 'Test Agent', email: 'agent@test.com') }
   let(:inbox) { create(:inbox, account: account, working_hours_enabled: true) }
   let(:inbox_member) { create(:inbox_member, user: user, inbox: inbox) }
+  let(:business_hours) { false } # default
+  let(:group_by) { 'day' } # default
 
   # Note that all the reporting events are in a separate helper file since they take up a lot of space and make tests unreadable
   include_context 'agent reports spec events'
 
   describe V2::Reports::Agents::AverageFirstResponseTimeBuilder do
     subject { builder.perform }
-
-    let(:business_hours) { false } # default
-    let(:group_by) { 'day' } # default
 
     let(:builder) do
       described_class.new(
@@ -35,8 +34,8 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
 
     context 'with defaults when business hours is false and group by is set to day' do
       it 'returns the average first response time by agent' do
-        # avg value in seconds of 10 records with 1 day first response time and 5 records with 3 days resp time
-        expected_avg_first_response = 144_000.0
+        # avg value in seconds of 11 records with 1 day first response time and 5 records with 3 days resp time
+        expected_avg_first_response = 140_400.0
 
         expect(subject.size).to eq(1)
 
@@ -70,8 +69,8 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
       let(:group_by) { 'week' }
 
       it 'returns the average first response time by agent' do
-        # avg value in seconds of 10 records with 1 day first response time and 5 records with 3 days resp time
-        expected_avg_first_response = 144_000.0
+        # avg value in seconds of 11 records with 1 day first response time and 5 records with 3 days resp time
+        expected_avg_first_response = 140_400.0
         expected_entry_for_weekly_group_by = Time.zone.today.beginning_of_week(:sunday)
 
         expect(subject.size).to eq(1)
@@ -89,8 +88,8 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
       let(:group_by) { 'month' }
 
       it 'returns the average first response time by agent' do
-        # avg value in seconds of 10 records with 1 day first response time and 5 records with 3 days resp time
-        expected_avg_first_response = 144_000.0
+        # avg value in seconds of 11 records with 1 day first response time and 5 records with 3 days resp time
+        expected_avg_first_response = 140_400.0
         expected_entry_for_monthly_group_by = Time.zone.today.beginning_of_month
 
         expect(subject.size).to eq(1)
@@ -108,8 +107,8 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
       let(:group_by) { 'year' }
 
       it 'returns the average first response time by agent' do
-        # avg value in seconds of 10 records with 1 day first response time and 5 records with 3 days resp time
-        expected_avg_first_response = 144_000.0
+        # avg value in seconds of 11 records with 1 day first response time and 5 records with 3 days resp time
+        expected_avg_first_response = 140_400.0
         expected_entry_for_yearly_group_by = Time.zone.today.beginning_of_year
 
         expect(subject.size).to eq(1)
@@ -135,8 +134,42 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
   describe V2::Reports::Agents::AverageResolutionTimeBuilder do
     subject { builder.perform }
 
-    let(:business_hours) { false } # default
-    let(:group_by) { 'day' } # default
+    let(:builder) do
+      described_class.new(
+        account: account,
+        params: {
+          business_hours: business_hours,
+          since: time_range_begin.to_time,
+          until: time_range_end.to_time,
+          group_by: group_by
+        }
+      )
+    end
+
+    context 'with defaults when business hours is false and group by is set to day' do
+      it 'returns the average resolution time by agent' do
+        conversations = account.conversations.where('created_at >= ?', time_range_begin)
+        perform_enqueued_jobs do
+          conversations.each(&:resolved!) ## resolve 5 conversations
+        end
+
+        # avg resolution time of 6 conversations in last 7 days
+        expected_avg_resolution_time = 478_957.1666666667
+
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+        expect(report_entries[Time.zone.today]).to eq(expected_avg_resolution_time)
+      end
+    end
+  end
+
+  describe V2::Reports::Agents::ReplyTimeBuilder do
+    subject { builder.perform }
 
     let(:builder) do
       described_class.new(
@@ -150,17 +183,10 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
       )
     end
 
-    context 'with defaults when business hours is false and group by is set to day', focus: true do
-      it 'returns the average resolution time by agent' do
-        conversations = account.conversations.where('created_at >= ?', time_range_begin)
-        perform_enqueued_jobs do
-          conversations.each(&:resolved!) ## resolve 5 conversations
-        end
-
-        # avg resolution time of 5 conversations in last 7 days
-        expected_avg_resolution_time = 504_574.2
-
-        puts "subject: #{subject}"
+    context 'with defaults when business hours is false and group by is set to day' do
+      it 'returns the reply time by agent' do
+        # avg value in seconds of 1 conversation with a reply time of 1 day
+        expected_avg_reply_time = 86_400.0
 
         expect(subject.size).to eq(1)
 
@@ -169,7 +195,40 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
         expect(agent_report[:id]).to eq(user.id)
 
         report_entries = agent_report[:entries]
-        expect(report_entries[Time.zone.today]).to eq(expected_avg_resolution_time)
+        expect(report_entries[Time.zone.today]).to eq(expected_avg_reply_time)
+      end
+    end
+  end
+
+  describe V2::Reports::Agents::ConversationsCountBuilder do
+    subject { builder.perform }
+
+    let(:builder) do
+      described_class.new(
+        account: account,
+        params: {
+          business_hours: business_hours,
+          since: time_range_begin.to_time,
+          until: time_range_end.to_time,
+          group_by: group_by
+        }
+      )
+    end
+
+    context 'with defaults when group by is set to day' do
+      it 'returns the conversations count by agent' do
+
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+
+        # 6 conversations in the last 7 days
+        expect(report_entries[Time.zone.today - 3.days]).to eq(1)
+        expect(report_entries[Time.zone.today - 5.days]).to eq(5)
       end
     end
   end

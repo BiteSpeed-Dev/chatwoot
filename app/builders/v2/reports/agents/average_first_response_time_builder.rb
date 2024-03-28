@@ -44,8 +44,4 @@ class V2::Reports::Agents::AverageFirstResponseTimeBuilder < V2::Reports::Agents
       hash[agent_user_id_key(result)][group_by_duration_key(result)] = average_first_response_value(result)
     end
   end
-
-  def agents
-    @agents ||= account.users.order_by_full_name
-  end
 end

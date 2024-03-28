@@ -25,10 +25,6 @@ class V2::Reports::Agents::BaseReportBuilder
 
   private
 
-  def reporting_events
-    @reporting_events ||= account.reporting_events.where(created_at: range)
-  end
-
   def get_grouped_values(relation)
     @grouped_values = relation.group_by_period(
       params[:group_by] || DEFAULT_GROUP_BY,

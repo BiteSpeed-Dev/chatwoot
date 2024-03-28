@@ -13,22 +13,35 @@ class V2::Reports::Agents::AverageFirstResponseTimeBuilder < V2::Reports::Agents
   private
 
   def reporting_events
-    @reporting_events ||= account.reporting_events.where(created_at: range)
+    @reporting_events ||= account.reporting_events.where(name: 'first_response')
+                                 .where.not(user_id: nil) # exclude bot responses
+                                 .group(:user_id) # group by agent
   end
 
   def grouped_average_first_response
-    value_attribute = params[:business_hours] ? 'value_in_business_hours' : 'value'
-    reporting_events.where(name: 'first_response')
-                    .where.not(user_id: nil)
-                    .select("DATE(created_at) as created_date, user_id, AVG(#{value_attribute}) as avg_first_response")
-                    .group('created_date, user_id')
-                    .order('created_date ASC')
+    value_attribute = params[:business_hours] ? :value_in_business_hours : :value
+    (get_grouped_values reporting_events).average(value_attribute) # uses groupdate gem to group by custom time periods
+  end
+
+  ## pulling out agent_user_id from: [[agent_user_id, group_by], average_first_response_value]
+  def agent_user_id_key(grouped_result)
+    grouped_result.first.first
+  end
+
+  ## pulling out average_first_response_value from: [[agent_user_id, group_by], average_first_response_value]
+  def average_first_response_value(grouped_result)
+    grouped_result.second
+  end
+
+  ## pulling out group_by from: [[agent_user_id, group_by], average_first_response_value]
+  def group_by_duration_key(grouped_result)
+    grouped_result.first.second
   end
 
   def average_first_response_by_date_user
     @average_first_response_by_date_user ||= grouped_average_first_response.each_with_object({}) do |result, hash|
-      hash[result.user_id] ||= {}
-      hash[result.user_id][result.created_date] = result.avg_first_response
+      hash[agent_user_id_key(result)] ||= {}
+      hash[agent_user_id_key(result)][group_by_duration_key(result)] = average_first_response_value(result)
     end
   end
 

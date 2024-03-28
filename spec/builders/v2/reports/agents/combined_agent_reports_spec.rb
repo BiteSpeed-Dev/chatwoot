@@ -6,10 +6,11 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
   include ActiveJob::TestHelper
 
   let(:account) { create(:account) }
-  let(:user) { create(:user, account: account, name: 'Test Agent', email: 'agent@test.com') }
-
-  let(:time_range_begin) { Time.zone.today - 7.days }
   let(:time_range_end) { Time.zone.today.end_of_day }
+  let(:time_range_begin) { Time.zone.today - 7.days }
+  let(:user) { create(:user, account: account, name: 'Test Agent', email: 'agent@test.com') }
+  let(:inbox) { create(:inbox, account: account, working_hours_enabled: true) }
+  let(:inbox_member) { create(:inbox_member, user: user, inbox: inbox) }
 
   # Note that all the reporting events are in a separate helper file since they take up a lot of space and make tests unreadable
   include_context 'agent reports spec events'
@@ -71,6 +72,7 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
       it 'returns the average first response time by agent' do
         # avg value in seconds of 10 records with 1 day first response time and 5 records with 3 days resp time
         expected_avg_first_response = 144_000.0
+        expected_entry_for_weekly_group_by = Time.zone.today.beginning_of_week(:sunday)
 
         expect(subject.size).to eq(1)
 
@@ -79,7 +81,53 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
         expect(agent_report[:id]).to eq(user.id)
 
         report_entries = agent_report[:entries]
-        expect(report_entries[Time.zone.today]).to eq(expected_avg_first_response)
+        expect(report_entries[expected_entry_for_weekly_group_by]).to eq(expected_avg_first_response)
+      end
+    end
+
+    context 'when group by is set to month' do
+      let(:group_by) { 'month' }
+
+      it 'returns the average first response time by agent' do
+        # avg value in seconds of 10 records with 1 day first response time and 5 records with 3 days resp time
+        expected_avg_first_response = 144_000.0
+        expected_entry_for_monthly_group_by = Time.zone.today.beginning_of_month
+
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+        expect(report_entries[expected_entry_for_monthly_group_by]).to eq(expected_avg_first_response)
+      end
+    end
+
+    context 'when group by is set to year' do
+      let(:group_by) { 'year' }
+
+      it 'returns the average first response time by agent' do
+        # avg value in seconds of 10 records with 1 day first response time and 5 records with 3 days resp time
+        expected_avg_first_response = 144_000.0
+        expected_entry_for_yearly_group_by = Time.zone.today.beginning_of_year
+
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+        expect(report_entries[expected_entry_for_yearly_group_by]).to eq(expected_avg_first_response)
+      end
+    end
+
+    context 'when group by is set to invalid value' do
+      let(:group_by) { 'invalid' }
+
+      it 'raises an error' do
+        expect { subject }.to raise_error(ActiveModel::ValidationError)
       end
     end
   end

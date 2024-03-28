@@ -1,10 +1,6 @@
 RSpec.shared_context 'agent reports spec events' do
-  before(:each) do
+  before do
     travel_to(Time.zone.today) do
-      inbox = create(:inbox, account: account, working_hours_enabled: true)
-      create(:inbox_member, user: user, inbox: inbox)
-      # create(:inbox_member, user: user2, inbox: inbox)
-
       gravatar_url = 'https://www.gravatar.com'
       stub_request(:get, /#{gravatar_url}.*/).to_return(status: 404)
 

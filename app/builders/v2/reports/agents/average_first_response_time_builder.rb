@@ -1,9 +1,11 @@
 class V2::Reports::Agents::AverageFirstResponseTimeBuilder
   include DateRangeHelper
+  include GroupByReportingHelper
 
   pattr_initialize [:account, :params]
 
   def perform
+    puts "The state of the params are: #{params.inspect}"
     agents.map do |agent|
       {
         id: agent.id,
@@ -22,6 +24,7 @@ class V2::Reports::Agents::AverageFirstResponseTimeBuilder
 
   def grouped_average_first_response
     value_attribute = params[:business_hours] ? 'value_in_business_hours' : 'value'
+    puts "The value attribute is: #{value_attribute}"
     reporting_events.where(name: 'first_response')
                     .where.not(user_id: nil)
                     .select("DATE(created_at) as created_date, user_id, AVG(#{value_attribute}) as avg_first_response")

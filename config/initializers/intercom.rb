@@ -4,7 +4,7 @@ require 'net/http'
 IntercomRails.config do |config|
   # == Intercom app_id
   #
-  config.app_id = ENV['INTERCOM_APP_ID'] || 'umzi6wy2'
+  config.app_id = ENV['INTERCOM_APP_ID'] || 'sx8k4u4v'
 
   # == Intercom session_duration
   #

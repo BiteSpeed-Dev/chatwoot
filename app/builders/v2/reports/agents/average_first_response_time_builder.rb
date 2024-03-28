@@ -5,7 +5,7 @@ class V2::Reports::Agents::AverageFirstResponseTimeBuilder < V2::Reports::Agents
         id: agent.id,
         name: agent.name,
         email: agent.email,
-        entries: average_first_response_by_date_user[agent.id]
+        entries: average_first_response_by_user[agent.id]
       }
     end
   end
@@ -38,8 +38,8 @@ class V2::Reports::Agents::AverageFirstResponseTimeBuilder < V2::Reports::Agents
     grouped_result.first.second
   end
 
-  def average_first_response_by_date_user
-    @average_first_response_by_date_user ||= grouped_average_first_response.each_with_object({}) do |result, hash|
+  def average_first_response_by_user
+    @average_first_response_by_user ||= grouped_average_first_response.each_with_object({}) do |result, hash|
       hash[agent_user_id_key(result)] ||= {}
       hash[agent_user_id_key(result)][group_by_duration_key(result)] = average_first_response_value(result)
     end

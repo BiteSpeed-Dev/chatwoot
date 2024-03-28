@@ -131,4 +131,46 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
       end
     end
   end
+
+  describe V2::Reports::Agents::AverageResolutionTimeBuilder do
+    subject { builder.perform }
+
+    let(:business_hours) { false } # default
+    let(:group_by) { 'day' } # default
+
+    let(:builder) do
+      described_class.new(
+        account: account,
+        params: {
+          business_hours: business_hours,
+          since: time_range_begin.to_time,
+          until: time_range_end.to_time,
+          group_by: group_by
+        }
+      )
+    end
+
+    context 'with defaults when business hours is false and group by is set to day', focus: true do
+      it 'returns the average resolution time by agent' do
+        conversations = account.conversations.where('created_at >= ?', time_range_begin)
+        perform_enqueued_jobs do
+          conversations.each(&:resolved!) ## resolve 5 conversations
+        end
+
+        # avg resolution time of 5 conversations in last 7 days
+        expected_avg_resolution_time = 504_574.2
+
+        puts "subject: #{subject}"
+
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+        expect(report_entries[Time.zone.today]).to eq(expected_avg_resolution_time)
+      end
+    end
+  end
 end

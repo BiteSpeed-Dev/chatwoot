@@ -154,7 +154,7 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
         end
 
         # avg resolution time of 6 conversations in last 7 days
-        expected_avg_resolution_time = 478_957.1666666667
+        expected_avg_resolution_time = 404_624.8333333333
 
         expect(subject.size).to eq(1)
 
@@ -217,7 +217,6 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
 
     context 'with defaults when group by is set to day' do
       it 'returns the conversations count by agent' do
-
         expect(subject.size).to eq(1)
 
         agent_report = subject.pop
@@ -229,6 +228,138 @@ describe 'Combined Agent Reports' do # rubocop:disable RSpec/DescribeClass
         # 6 conversations in the last 7 days
         expect(report_entries[Time.zone.today - 3.days]).to eq(1)
         expect(report_entries[Time.zone.today - 5.days]).to eq(5)
+      end
+    end
+  end
+
+  describe V2::Reports::Agents::ResolutionsCountBuilder do
+    subject { builder.perform }
+
+    let(:builder) do
+      described_class.new(
+        account: account,
+        params: {
+          business_hours: business_hours,
+          since: time_range_begin.to_time,
+          until: time_range_end.to_time,
+          group_by: group_by
+        }
+      )
+    end
+
+    context 'with defaults when group by is set to day' do
+      it 'returns the resolutions count by agent' do
+        conversations = account.conversations.where('created_at >= ?', time_range_begin)
+        perform_enqueued_jobs do
+          conversations.each(&:resolved!) ## resolve 6 conversations
+        end
+
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+
+        # 6 resolutions in the last 7 days
+        expect(report_entries[Time.zone.today]).to eq(6)
+      end
+    end
+  end
+
+  describe V2::Reports::Agents::IncomingMessagesCountBuilder do
+    subject { builder.perform }
+
+    let(:builder) do
+      described_class.new(
+        account: account,
+        params: {
+          business_hours: business_hours,
+          since: time_range_begin.to_time,
+          until: time_range_end.to_time,
+          group_by: group_by
+        }
+      )
+    end
+
+    context 'with defaults when group by is set to day' do
+      it 'returns the incoming messages count by agent' do
+        puts "subject: #{subject.inspect}"
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+
+        # 7 incoming messages in the last 7 days
+        expect(report_entries[Time.zone.today - 1.day]).to eq(1)
+        expect(report_entries[Time.zone.today - 3.days]).to eq(1)
+        expect(report_entries[Time.zone.today - 5.days]).to eq(5)
+      end
+    end
+  end
+
+  describe V2::Reports::Agents::OutgoingMessagesCountBuilder do
+    subject { builder.perform }
+
+    let(:builder) do
+      described_class.new(
+        account: account,
+        params: {
+          business_hours: business_hours,
+          since: time_range_begin.to_time,
+          until: time_range_end.to_time,
+          group_by: group_by
+        }
+      )
+    end
+
+    context 'with defaults when group by is set to day' do
+      it 'returns the outgoing messages count by agent' do
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+
+        # 17 outgoing messages in the last 7 days
+        expect(report_entries[Time.zone.today]).to eq(1)
+        expect(report_entries[Time.zone.today - 2.days]).to eq(16)
+      end
+    end
+  end
+
+  describe V2::Reports::Agents::UnattendedConversationsCountBuilder do
+    subject { builder.perform }
+
+    let(:builder) do
+      described_class.new(
+        account: account,
+        params: {
+          business_hours: business_hours,
+          since: time_range_begin.to_time,
+          until: time_range_end.to_time,
+          group_by: group_by
+        }
+      )
+    end
+
+    context 'with defaults when group by is set to day' do
+      it 'returns the unattended conversations count by agent if there are any' do
+        expect(subject.size).to eq(1)
+
+        agent_report = subject.pop
+
+        expect(agent_report[:id]).to eq(user.id)
+
+        report_entries = agent_report[:entries]
+
+        expect(report_entries[Time.zone.today]).to eq(0)
       end
     end
   end

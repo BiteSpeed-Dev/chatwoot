@@ -16,8 +16,6 @@ RSpec.shared_context 'agent reports spec events' do
                                    account: account, inbox: inbox,
                                    conversation: conversation,
                                    created_at: Time.zone.today - 9.days)
-          conversation.update_labels('label_1')
-          conversation.label_list
           conversation.save!
         end
 
@@ -33,8 +31,6 @@ RSpec.shared_context 'agent reports spec events' do
                                    account: account, inbox: inbox,
                                    conversation: conversation,
                                    created_at: (Time.zone.today - 5.days))
-          conversation.update_labels('label_2')
-          conversation.label_list
           conversation.save!
         end
 
@@ -51,16 +47,14 @@ RSpec.shared_context 'agent reports spec events' do
                                    conversation: conversation,
                                    created_at: (Time.zone.today - 2.day))
           create_list(:message, 1, message_type: 'incoming',
-                                    account: account, inbox: inbox,
-                                    conversation: conversation,
-                                    created_at: (Time.zone.today - 1.day))
+                                   account: account, inbox: inbox,
+                                   conversation: conversation,
+                                   created_at: (Time.zone.today - 1.day))
           create_list(:message, 1, message_type: 'outgoing',
-                                    account: account, inbox: inbox, sender: user,
-                                    conversation: conversation,
-                                    created_at: Time.zone.today)
+                                   account: account, inbox: inbox, sender: user,
+                                   conversation: conversation,
+                                   created_at: Time.zone.today)
 
-          conversation.update_labels('label_3')
-          conversation.label_list
           conversation.save!
         end
       end

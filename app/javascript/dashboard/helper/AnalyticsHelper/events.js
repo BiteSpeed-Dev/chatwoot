@@ -33,6 +33,7 @@ export const LABEL_EVENTS = Object.freeze({
 export const REPORTS_EVENTS = Object.freeze({
   DOWNLOAD_REPORT: 'Downloaded a report',
   FILTER_REPORT: 'Used filters in the reports',
+  EMAIL_REPORT: 'Emailed a report',
 });
 
 // CONTACTS PAGE EVENTS

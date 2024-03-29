@@ -58,7 +58,7 @@ import ReportsFiltersInboxes from './Filters/Inboxes.vue';
 import ReportsFiltersTeams from './Filters/Teams.vue';
 import ReportsFiltersRatings from './Filters/Ratings.vue';
 import subDays from 'date-fns/subDays';
-import { DATE_RANGE_OPTIONS } from '../constants';
+import { DATE_RANGE_OPTIONS, GROUP_BY_FILTER } from '../constants';
 import { getUnixStartOfDay, getUnixEndOfDay } from 'helpers/DateHelper';
 
 export default {
@@ -110,7 +110,7 @@ export default {
     return {
       // default value, need not be translated
       selectedDateRange: DATE_RANGE_OPTIONS.LAST_7_DAYS,
-      selectedGroupByFilter: null,
+      selectedGroupByFilter: GROUP_BY_FILTER[1],
       selectedLabel: null,
       selectedInbox: null,
       selectedTeam: null,

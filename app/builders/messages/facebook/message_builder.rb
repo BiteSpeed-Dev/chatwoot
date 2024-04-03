@@ -52,8 +52,33 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
     end
   end
 
+  def reopen_resolved_conversation
+    if @conversation.inbox.active_bot?
+      @conversation.pending!
+    else
+      @conversation.open!
+    end
+
+    @conversation.update(last_resolution_time: nil)
+  end
+
+  def find_or_initialize_conversation
+    Conversation.find_by(conversation_params) || build_conversation
+  end
+
   def conversation
-    @conversation ||= Conversation.find_by(conversation_params) || build_conversation
+    @conversation ||= find_or_initialize_conversation
+
+    return @conversation unless @conversation.resolved?
+
+    time_diff = DateTime.now.utc - @conversation.last_resolution_time
+
+    if time_diff > @conversation.inbox.ticketing_interval.seconds
+      build_conversation
+    else
+      reopen_resolved_conversation
+      @conversation
+    end
   end
 
   def build_conversation
@@ -90,8 +115,8 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
 
   def message_params
     {
-      account_id: conversation.account_id,
-      inbox_id: conversation.inbox_id,
+      account_id: @conversation.account_id,
+      inbox_id: @conversation.inbox_id,
       message_type: @message_type,
       content: response.content,
       source_id: response.identifier,

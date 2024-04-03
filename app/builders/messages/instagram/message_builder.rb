@@ -68,10 +68,34 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     @contact ||= @inbox.contact_inboxes.find_by(source_id: message_source_id)&.contact
   end
 
-  def conversation
-    @conversation ||= Conversation.where(conversation_params).find_by(
+  def reopen_resolved_conversation
+    if @conversation.inbox.active_bot?
+      @conversation.pending!
+    else
+      @conversation.open!
+    end
+
+    @conversation.update(last_resolution_time: nil)
+  end
+
+  def find_or_initialize_conversation
+    Conversation.where(conversation_params).find_by(
       "additional_attributes ->> 'type' = 'instagram_direct_message'"
     ) || build_conversation
+  end
+
+  def conversation
+    @conversation ||= find_or_initialize_conversation
+
+    return @conversation unless @conversation.resolved?
+
+    time_diff = DateTime.now.utc - @conversation.last_resolution_time
+    if time_diff > @conversation.inbox.ticketing_interval.seconds
+      build_conversation
+    else
+      reopen_resolved_conversation
+      @conversation
+    end
   end
 
   def message_content
@@ -123,8 +147,8 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
 
   def message_params
     params = {
-      account_id: conversation.account_id,
-      inbox_id: conversation.inbox_id,
+      account_id: @conversation.account_id,
+      inbox_id: @conversation.inbox_id,
       message_type: message_type,
       source_id: message_identifier,
       content: message_content,

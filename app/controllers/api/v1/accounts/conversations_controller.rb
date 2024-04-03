@@ -132,6 +132,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def set_conversation_status
     @conversation.status = params[:status]
+    @conversation.last_resolution_at = params[:status] == 'resolved' ? DateTime.now.utc : nil
     @conversation.snoozed_until = parse_date_time(params[:snoozed_until].to_s) if params[:snoozed_until]
   end
 

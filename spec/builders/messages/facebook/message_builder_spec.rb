@@ -59,4 +59,71 @@ describe Messages::Facebook::MessageBuilder do
       expect(contact.name).to eq(default_name)
     end
   end
+
+  context 'when ticketting_interval is set' do
+    subject(:mocked_message_builder) do
+      described_class.new(mocked_incoming_fb_text_message, facebook_channel.inbox).perform
+    end
+
+    let!(:mocked_message_object) { build(:mocked_message_text, sender_id: contact_inbox.source_id).to_json }
+    let!(:mocked_incoming_fb_text_message) { Integrations::Facebook::MessageParser.new(mocked_message_object) }
+    let(:contact) { create(:contact, name: 'Jane Dae') }
+    let(:contact_inbox) { create(:contact_inbox, contact_id: contact.id, inbox_id: facebook_channel.inbox.id) }
+
+    before do
+      facebook_channel.inbox.update!(ticketing_interval: 600)
+      stub_request(:get, /graph.facebook.com/)
+    end
+
+    it 'creates a new conversation if existing conversation is not present' do
+      inital_count = Conversation.count
+
+      mocked_message_builder
+
+      facebook_channel.inbox.reload
+
+      expect(facebook_channel.inbox.conversations.count).to eq(1)
+      expect(Conversation.count).to eq(inital_count + 1)
+    end
+
+    it 'will not create a new conversation if last conversation is not resolved' do
+      existing_conversation = create(:conversation, account_id: facebook_channel.inbox.account.id, inbox_id: facebook_channel.inbox.id,
+                                                    contact_id: contact.id, contact_inbox_id: contact_inbox.id,
+                                                    status: :open)
+
+      mocked_message_builder
+
+      facebook_channel.inbox.reload
+
+      expect(facebook_channel.inbox.conversations.last.id).to eq(existing_conversation.id)
+    end
+
+    it 'creates a new conversation if last conversation is resolved later than ticketting interval' do
+      existing_conversation = create(:conversation, account_id: facebook_channel.inbox.account.id,
+                                                    inbox_id: facebook_channel.inbox.id, contact_id: contact.id, contact_inbox_id: contact_inbox.id,
+                                                    status: :resolved, last_resolution_time: 11.minutes.ago)
+
+      inital_count = Conversation.count
+
+      mocked_message_builder
+
+      facebook_channel.inbox.reload
+
+      expect(facebook_channel.inbox.conversations.last.id).not_to eq(existing_conversation.id)
+      expect(Conversation.count).to eq(inital_count + 1)
+    end
+
+    it 'reopens the resolved conversation if last conversation is resolved within ticketting interval' do
+      existing_conversation = create(:conversation, account_id: facebook_channel.inbox.account.id,
+                                                    inbox_id: facebook_channel.inbox.id, contact_id: contact.id, contact_inbox_id: contact_inbox.id,
+                                                    status: :resolved, last_resolution_time: 9.minutes.ago)
+
+      mocked_message_builder
+
+      facebook_channel.inbox.reload
+
+      expect(facebook_channel.inbox.conversations.last.id).to eq(existing_conversation.id)
+      expect(facebook_channel.inbox.conversations.last.status).to eq('open')
+    end
+  end
 end

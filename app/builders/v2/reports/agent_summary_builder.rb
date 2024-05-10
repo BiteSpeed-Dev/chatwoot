@@ -3,7 +3,6 @@ class V2::Reports::AgentSummaryBuilder < V2::Reports::BaseSummaryBuilder
 
   def build
     set_grouped_conversations_count
-    set_grouped_resolved_conversations_count
     set_grouped_avg_reply_time
     set_grouped_avg_first_response_time
     set_grouped_avg_resolution_time
@@ -28,10 +27,6 @@ class V2::Reports::AgentSummaryBuilder < V2::Reports::BaseSummaryBuilder
     @grouped_avg_reply_time = get_grouped_average(reporting_events.where(name: 'reply_time'))
   end
 
-  def set_grouped_resolved_conversations_count
-    @grouped_resolved_conversations_count = reporting_events.where(name: 'conversation_resolved').group(group_by_key).count
-  end
-
   def group_by_key
     :user_id
   end
@@ -42,14 +37,12 @@ class V2::Reports::AgentSummaryBuilder < V2::Reports::BaseSummaryBuilder
 
   def prepare_report
     account.account_users.each_with_object([]) do |account_user, arr|
-      user_id = account_user.user_id
       arr << {
-        id: user_id,
-        conversations_count: @grouped_conversations_count[user_id],
-        resolved_conversations_count: @grouped_resolved_conversations_count[user_id],
-        avg_resolution_time: @grouped_avg_resolution_time[user_id],
-        avg_first_response_time: @grouped_avg_first_response_time[user_id],
-        avg_reply_time: @grouped_avg_reply_time[user_id]
+        id: account_user.user_id,
+        conversations_count: @grouped_conversations_count[account_user.user_id],
+        avg_resolution_time: @grouped_avg_resolution_time[account_user.user_id],
+        avg_first_response_time: @grouped_avg_first_response_time[account_user.user_id],
+        avg_reply_time: @grouped_avg_reply_time[account_user.user_id]
       }
     end
   end

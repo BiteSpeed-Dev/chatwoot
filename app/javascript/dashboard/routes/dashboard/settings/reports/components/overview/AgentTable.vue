@@ -12,12 +12,17 @@
         $t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.LOADING_MESSAGE')
       }}</span>
     </div>
-    <div v-if="agents.length > 0" class="table-pagination">
+    <empty-state
+      v-else-if="!isLoading && !agentMetrics.length"
+      :title="$t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.NO_AGENTS')"
+    />
+    <div v-if="agentMetrics.length > 0" class="table-pagination">
       <ve-pagination
         :total="agents.length"
         :page-index="pageIndex"
         :page-size="25"
         :page-size-option="[25]"
+        @on-page-number-change="onPageNumberChange"
       />
     </div>
   </div>
@@ -26,12 +31,14 @@
 <script>
 import { VeTable, VePagination } from 'vue-easytable';
 import Spinner from 'shared/components/Spinner.vue';
+import EmptyState from 'dashboard/components/widgets/EmptyState.vue';
 import rtlMixin from 'shared/mixins/rtlMixin';
 import Thumbnail from 'dashboard/components/widgets/Thumbnail.vue';
 
 export default {
   name: 'AgentTable',
   components: {
+    EmptyState,
     Spinner,
     VeTable,
     VePagination,
@@ -57,15 +64,15 @@ export default {
   },
   computed: {
     tableData() {
-      return this.agents.map(agent => {
-        const agentMetrics = this.getAgentMetrics(agent.id);
+      return this.agentMetrics.map(agent => {
+        const agentInformation = this.getAgentInformation(agent.id);
         return {
-          agent: agent.name,
-          email: agent.email,
-          thumbnail: agent.thumbnail,
-          open: agentMetrics.open || 0,
-          unattended: agentMetrics.unattended || 0,
-          status: agent.availability_status,
+          agent: agentInformation.name,
+          email: agentInformation.email,
+          thumbnail: agentInformation.thumbnail,
+          open: agent.metric.open || 0,
+          unattended: agent.metric.unattended || 0,
+          status: agentInformation.availability_status,
         };
       });
     },
@@ -119,11 +126,11 @@ export default {
     },
   },
   methods: {
-    getAgentMetrics(id) {
-      return (
-        this.agentMetrics.find(metrics => metrics.assignee_id === Number(id)) ||
-        {}
-      );
+    onPageNumberChange(pageIndex) {
+      this.$emit('page-change', pageIndex);
+    },
+    getAgentInformation(id) {
+      return this.agents.find(agent => agent.id === Number(id));
     },
   },
 };
@@ -163,7 +170,6 @@ export default {
       .title {
         @apply text-sm m-0 leading-[1.2] text-slate-800 dark:text-slate-100;
       }
-
       .sub-title {
         @apply text-xs text-slate-600 dark:text-slate-200;
       }

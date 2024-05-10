@@ -176,17 +176,12 @@ export default {
   },
   methods: {
     showEditAction(agent) {
-      return (
-        this.currentUserId !== agent.id &&
-        agent.available_name.toLowerCase() !== 'bitespeed bot'
-      );
+      return this.currentUserId !== agent.id;
     },
     showDeleteAction(agent) {
-      if (
-        agent.available_name.toLowerCase() === 'bitespeed bot' ||
-        this.currentUserId === agent.id
-      )
+      if (this.currentUserId === agent.id) {
         return false;
+      }
 
       if (!agent.confirmed) {
         return true;

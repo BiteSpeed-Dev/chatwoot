@@ -11,7 +11,6 @@
             {{ header }}
           </h5>
           <span
-            v-if="isLive"
             class="flex flex-row items-center pr-2 pl-2 m-1 rounded-sm text-green-400 dark:text-green-400 text-xs bg-green-100/30 dark:bg-green-100/20"
           >
             <span
@@ -29,7 +28,6 @@
     </div>
     <div
       v-if="!isLoading"
-      :class="!isLive ? 'px-0' : ''"
       class="card-body max-w-full w-full ml-auto mr-auto justify-between flex"
     >
       <slot />
@@ -54,10 +52,6 @@ export default {
     Spinner,
   },
   props: {
-    isLive: {
-      type: Boolean,
-      default: true,
-    },
     header: {
       type: String,
       default: '',
@@ -69,10 +63,6 @@ export default {
     loadingMessage: {
       type: String,
       default: '',
-    },
-    isFilter: {
-      type: Boolean,
-      default: false,
     },
   },
 };
@@ -106,11 +96,9 @@ export default {
 .card-body {
   .metric-content {
     @apply pb-2;
-
     .heading {
       @apply text-base text-slate-700 dark:text-slate-100;
     }
-
     .metric {
       @apply text-woot-800 dark:text-woot-300 text-3xl mb-0 mt-1;
     }

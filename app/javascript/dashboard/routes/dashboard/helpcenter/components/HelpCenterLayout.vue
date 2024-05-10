@@ -149,6 +149,7 @@ export default {
     },
     accessibleMenuItems() {
       if (!this.selectedPortal) return [];
+
       const {
         allArticlesCount,
         mineArticlesCount,

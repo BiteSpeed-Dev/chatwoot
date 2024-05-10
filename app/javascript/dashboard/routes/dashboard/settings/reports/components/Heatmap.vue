@@ -69,10 +69,6 @@ export default {
       type: Array,
       default: () => [],
     },
-    selectedDayFilter: {
-      type: Object,
-      default: () => ({}),
-    },
     isLoading: {
       type: Boolean,
       default: false,
@@ -169,7 +165,6 @@ $marker-height: var(--space-two);
 @mixin heatmap-level($level) {
   $color: map-get($heatmap-colors, 'level-#{$level}');
   background-color: $color;
-
   &:hover {
     border: 1px solid map-get($heatmap-hover-border-color, 'level-#{$level}');
   }
@@ -193,7 +188,6 @@ $marker-height: var(--space-two);
   100% {
     opacity: 1;
   }
-
   50% {
     opacity: 0;
   }
@@ -276,23 +270,18 @@ $marker-height: var(--space-two);
     &.l1 {
       @include heatmap-level(1);
     }
-
     &.l2 {
       @include heatmap-level(2);
     }
-
     &.l3 {
       @include heatmap-level(3);
     }
-
     &.l4 {
       @include heatmap-level(4);
     }
-
     &.l5 {
       @include heatmap-level(5);
     }
-
     &.l6 {
       @include heatmap-level(6);
     }

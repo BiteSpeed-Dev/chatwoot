@@ -14,7 +14,6 @@
         v-if="configItem.type === 'frame' && configItem.url"
         :id="getFrameId(index)"
         :src="configItem.url"
-        :allow="`clipboard-read *; clipboard-write *`"
         @load="() => onIframeLoad(index)"
       />
     </div>

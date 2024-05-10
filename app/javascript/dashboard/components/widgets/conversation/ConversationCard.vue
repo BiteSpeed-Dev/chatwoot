@@ -153,6 +153,10 @@ export default {
       type: Object,
       default: () => {},
     },
+    inboxType: {
+      type: String,
+      default: '',
+    },
     hideInboxName: {
       type: Boolean,
       default: false,
@@ -189,6 +193,11 @@ export default {
   data() {
     return {
       hovered: false,
+      timerCount: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      timerString: '',
       showContextMenu: false,
       contextMenu: {
         x: null,
@@ -233,6 +242,10 @@ export default {
       return this.unreadCount > 0;
     },
 
+    canReply() {
+      return this.chat.can_reply;
+    },
+
     isInboxNameVisible() {
       return !this.activeInbox;
     },
@@ -262,6 +275,33 @@ export default {
       return this.chat?.sla_policy_id;
     },
   },
+  watch: {
+    timerCount: {
+      handler(value) {
+        if (value > 0) {
+          setTimeout(() => {
+            this.timerCount = this.lastMessageAt(this.chat);
+            this.hours = Math.floor(this.timerCount / 3600);
+            this.minutes = Math.floor(
+              (this.timerCount - this.hours * 3600) / 60
+            );
+            this.seconds =
+              this.timerCount - this.hours * 3600 - this.minutes * 60;
+            if (this.hours > 0) this.timerString = `${this.hours} hours`;
+            else if (this.minutes > 0)
+              this.timerString = `${this.minutes} minutes`;
+            else this.timerString = `${this.seconds} seconds`;
+          }, 1000);
+        }
+      },
+      immediate: true,
+    },
+  },
+
+  mounted() {
+    this.timerCount = this.lastMessageAt(this.chat);
+  },
+
   methods: {
     onCardClick(e) {
       const { activeInbox, chat } = this;
@@ -395,5 +435,25 @@ export default {
       @apply m-0 cursor-pointer;
     }
   }
+}
+
+.conversation--timer {
+  font-size: 11px;
+  margin-top: var(--space-micro);
+  background: var(--w-500);
+  color: var(--white);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.2rem;
+  width: max-content;
+}
+
+.conversation--timer--alert {
+  font-size: 11px;
+  margin-top: var(--space-micro);
+  background: var(--r-400);
+  color: var(--w-50);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.2rem;
+  width: max-content;
 }
 </style>

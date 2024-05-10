@@ -39,10 +39,8 @@ export default {
     ...automation.routes,
     ...auditlogs.routes,
     ...billing.routes,
-    ...campaigns.routes,
     ...canned.routes,
     ...inbox.routes,
-    ...integrationapps.routes,
     ...integrations.routes,
     ...labels.routes,
     ...macros.routes,
@@ -50,5 +48,7 @@ export default {
     ...reports.routes,
     ...sla.routes,
     ...teams.routes,
+    ...campaigns.routes,
+    ...integrationapps.routes,
   ],
 };

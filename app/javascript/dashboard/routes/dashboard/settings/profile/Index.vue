@@ -101,7 +101,7 @@
     </div>
     <change-password v-if="!globalConfig.disableUserProfileUpdate" />
     <notification-settings />
-    <div
+    <!--<div
       class="border-b border-slate-50 dark:border-slate-700 items-center flex p-4 text-black-900 dark:text-slate-300 row"
     >
       <div class="w-1/4 py-4 pr-6 ml-0">
@@ -120,7 +120,7 @@
       <div class="p-4 w-[45%]">
         <masked-text :value="currentUser.access_token" />
       </div>
-    </div>
+    </div>-->
   </div>
 </template>
 

@@ -51,6 +51,14 @@ class AdministratorNotifications::ChannelNotificationsMailer < ApplicationMailer
     send_mail_with_liquid(to: admin_emails, subject: subject) and return
   end
 
+  def weekly_conversation_report(csv_url, start_date, end_date)
+    return unless smtp_config_set_or_development?
+
+    subject = "Weekly Conversation Report for #{start_date} to #{end_date}"
+    @action_url = csv_url
+    send_mail_with_liquid(to: admin_emails, subject: subject) and return
+  end
+
   def contact_import_failed
     return unless smtp_config_set_or_development?
 

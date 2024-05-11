@@ -179,7 +179,7 @@ gem 'reverse_markdown'
 gem 'informers'
 
 ## Bitespeed specific
-gem "intercom-rails"
+gem 'intercom-rails'
 
 ### Gems required only in specific deployment environments ###
 ##############################################################

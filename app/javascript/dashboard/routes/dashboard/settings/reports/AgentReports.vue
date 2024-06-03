@@ -19,11 +19,12 @@
     >
       <woot-reports
         key="agent-reports"
-        :show-download-button="false"
+        :show-download-button="true"
         class="!p-0"
         type="agent"
         getter-key="agents/getAgents"
         action-key="agents/get"
+        :download-button-label="$t('REPORT.DOWNLOAD_AGENT_REPORTS')"
       />
     </metric-card>
   </div>

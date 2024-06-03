@@ -1,11 +1,4 @@
 module Api::V2::Accounts::ReportsHelper
-  def generate_agents_report
-    Current.account.users.map do |agent|
-      agent_report = report_builder({ type: :agent, id: agent.id }).summary
-      [agent.name] + generate_readable_report_metrics(agent_report)
-    end
-  end
-
   def generate_inboxes_report
     Current.account.inboxes.map do |inbox|
       inbox_report = generate_report({ type: :inbox, id: inbox.id })

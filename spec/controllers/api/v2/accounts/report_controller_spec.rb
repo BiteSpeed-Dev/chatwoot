@@ -236,7 +236,7 @@ RSpec.describe 'Reports API', type: :request do
   describe 'GET /api/v2/accounts/:account_id/reports/agents' do
     context 'when it is an unauthenticated user' do
       it 'returns unauthorized' do
-        get "/api/v2/accounts/#{account.id}/reports/agents.csv"
+        get "/api/v2/accounts/#{account.id}/reports/agents"
 
         expect(response).to have_http_status(:unauthorized)
       end
@@ -246,24 +246,33 @@ RSpec.describe 'Reports API', type: :request do
       let(:params) do
         super().merge(
           since: 30.days.ago.to_i.to_s,
-          until: end_of_today.to_s
+          until: end_of_today.to_s,
+          groupd_by: 'day'
         )
       end
 
       it 'returns unauthorized for agents' do
-        get "/api/v2/accounts/#{account.id}/reports/agents.csv",
+        get "/api/v2/accounts/#{account.id}/reports/agents",
             params: params,
             headers: agent.create_new_auth_token
 
         expect(response).to have_http_status(:unauthorized)
       end
 
-      it 'returns summary' do
-        get "/api/v2/accounts/#{account.id}/reports/agents.csv",
+      it 'returns HTTP 200 for authorized access' do
+        get "/api/v2/accounts/#{account.id}/reports/agents",
             params: params,
             headers: admin.create_new_auth_token
 
         expect(response).to have_http_status(:success)
+      end
+
+      it 'triggers a job to calculate and email detailed agent report' do
+        get "/api/v2/accounts/#{account.id}/reports/agents",
+            params: params,
+            headers: admin.create_new_auth_token
+
+        expect(Reports::GenerateDetailedAgentReportsJob).to have_been_enqueued
       end
     end
 

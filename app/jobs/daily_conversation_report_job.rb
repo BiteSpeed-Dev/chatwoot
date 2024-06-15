@@ -4,6 +4,8 @@ require 'csv'
 class DailyConversationReportJob < ApplicationJob
   queue_as :scheduled_jobs
 
+  before_perform { ActiveRecord::Base.connection.execute("SET statement_timeout = '60s'") }
+
   JOB_DATA = [
     { account_id: 138, frequency: 'daily' },
     { account_id: 138, frequency: 'weekly' }, # should trigger only on Mondays

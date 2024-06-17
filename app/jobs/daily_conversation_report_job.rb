@@ -9,7 +9,8 @@ class DailyConversationReportJob < ApplicationJob
   JOB_DATA = [
     { account_id: 138, frequency: 'daily' },
     { account_id: 138, frequency: 'weekly' }, # should trigger only on Mondays
-    { account_id: 504, frequency: 'daily' }
+    { account_id: 504, frequency: 'daily' },
+    { account_id: 827, frequency: 'daily' }
   ].freeze
 
   def perform

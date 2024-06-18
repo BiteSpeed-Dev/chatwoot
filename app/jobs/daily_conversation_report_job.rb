@@ -6,18 +6,18 @@ class DailyConversationReportJob < ApplicationJob
 
   before_perform { ActiveRecord::Base.connection.execute("SET statement_timeout = '60s'") }
 
-  JOB_DATA = [
-    { account_id: 138, frequency: 'daily' },
-    { account_id: 138, frequency: 'weekly' }, # should trigger only on Mondays
-    { account_id: 504, frequency: 'daily' },
-    { account_id: 827, frequency: 'daily' }
-  ].freeze
+  JOB_DATA_URL = 'https://bitespeed-app.s3.amazonaws.com/InternalAccess/cw-auto-conversation-report.json'.freeze
 
   def perform
-    JOB_DATA.each do |job|
+    # fetching the job data from the URL
+    response = HTTParty.get(JOB_DATA_URL)
+    job_data = JSON.parse(response.body, symbolize_names: true)
+
+    job_data.each do |job|
       current_date = Date.current
       current_day = current_date.wday
 
+      # should trigger only on Mondays
       next if job[:frequency] == 'weekly' && current_day != 1
 
       current_date = Date.current

@@ -136,10 +136,10 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   private
 
   def fetch_previous_messages
-    previous_conversation = Current.account.where({
-                                                    inbox_id: params[:inbox_id],
-                                                    contact_id: params[:contact_id]
-                                                  }).order(created_at: :desc).first
+    previous_conversation = Current.account.conversations.find_by({
+                                                                    inbox_id: params[:inbox_id],
+                                                                    contact_id: params[:contact_id]
+                                                                  }).order(created_at: :desc).first
 
     return [] if previous_conversation.blank?
 

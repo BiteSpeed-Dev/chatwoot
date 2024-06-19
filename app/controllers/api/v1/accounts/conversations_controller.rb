@@ -142,7 +142,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
     return [] if previous_conversation.blank?
 
-    previous_conversation.messages.map do |message|
+    previous_conversation.messages.order(created_at: :asc).map do |message|
       message.attributes.except('conversation_id').merge(
         additional_attributes: (message.additional_attributes || {}).merge(ignore_automation_rules: true)
       )

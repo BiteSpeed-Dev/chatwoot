@@ -4,11 +4,11 @@ require 'csv'
 class DailyConversationReportJob < ApplicationJob
   queue_as :scheduled_jobs
 
-  before_perform { ActiveRecord::Base.connection.execute("SET statement_timeout = '60s'") }
-
   JOB_DATA_URL = 'https://bitespeed-app.s3.amazonaws.com/InternalAccess/cw-auto-conversation-report.json'.freeze
 
   def perform
+    set_statement_timeout
+
     # fetching the job data from the URL
     response = HTTParty.get(JOB_DATA_URL)
     job_data = JSON.parse(response.body, symbolize_names: true)
@@ -33,12 +33,18 @@ class DailyConversationReportJob < ApplicationJob
   end
 
   def generate_custom_report(account_id, range)
+    set_statement_timeout
+
     current_date = Date.current
 
     process_account(account_id, current_date, range, 'custom')
   end
 
   private
+
+  def set_statement_timeout
+    ActiveRecord::Base.connection.execute("SET statement_timeout = '60s'")
+  end
 
   def process_account(account_id, _current_date, range, frequency = 'daily')
     report = generate_report(account_id, range)

@@ -5,7 +5,7 @@ const setArrayValues = item => {
 const generateValues = item => {
   if (item.attribute_key === 'content') {
     const values = item.values || '';
-    return values.split(',');
+    return values.split('||');
   }
   if (Array.isArray(item.values)) {
     return setArrayValues(item);

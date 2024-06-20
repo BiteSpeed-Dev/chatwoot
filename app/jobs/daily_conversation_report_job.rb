@@ -74,7 +74,7 @@ class DailyConversationReportJob < ApplicationJob
           inboxes.name AS inbox_name,
           REPLACE(contacts.phone_number, '+', '') AS customer_phone_number,
           contacts.name AS customer_name,
-          COALESCE(users.name, 'Bitespeed Bot') AS agent_name,
+          COALESCE(users.name, 'None') AS agent_name,
           CASE
             WHEN conversations.status = 0 THEN 'open'
             WHEN conversations.status = 1 THEN 'resolved'

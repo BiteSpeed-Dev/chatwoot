@@ -501,7 +501,13 @@ export default {
           //   this.scrollTopBeforeLoad + heightDifference;
           // this.setScrollParams();
         } catch (error) {
-          Sentry.captureException(error);
+          Sentry.captureException(error, {
+            stateObject: {
+              currentChat: this.currentChat,
+              listLoadingStatus: this.listLoadingStatus,
+              isLoadingPrevious: this.isLoadingPrevious,
+            },
+          });
           Sentry.captureMessage('Error fetching previous messages');
         } finally {
           this.isLoadingPrevious = false;

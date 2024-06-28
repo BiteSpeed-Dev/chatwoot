@@ -473,7 +473,6 @@ export default {
   },
   mounted() {
     this.setSignature();
-    this.fetchContactDetails();
   },
   methods: {
     setSignature() {
@@ -548,10 +547,6 @@ export default {
         payload: this.newMessagePayload,
         isFromWhatsApp,
       });
-    },
-    fetchContactDetails() {
-      const id = this.contact.id;
-      this.$store.dispatch('contacts/show', { id });
     },
     async createConversation({ payload, isFromWhatsApp }) {
       try {

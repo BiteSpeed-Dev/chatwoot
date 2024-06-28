@@ -490,24 +490,22 @@ export default {
       ) {
         this.isLoadingPrevious = true;
         try {
-          throw new Error('Error fetching previous messages');
-          // await this.$store.dispatch('fetchPreviousMessages', {
-          //   conversationId: this.currentChat.id,
-          //   before: this.currentChat.messages[0].id,
-          // });
-          // const heightDifference =
-          //   this.conversationPanel.scrollHeight - this.heightBeforeLoad;
-          // this.conversationPanel.scrollTop =
-          //   this.scrollTopBeforeLoad + heightDifference;
-          // this.setScrollParams();
-        } catch (error) {
-          Sentry.captureException(error, {
-            stateObject: {
-              currentChat: this.currentChat,
-              listLoadingStatus: this.listLoadingStatus,
-              isLoadingPrevious: this.isLoadingPrevious,
-            },
+          await this.$store.dispatch('fetchPreviousMessages', {
+            conversationId: this.currentChat.id,
+            before: this.currentChat.messages[0].id,
           });
+          const heightDifference =
+            this.conversationPanel.scrollHeight - this.heightBeforeLoad;
+          this.conversationPanel.scrollTop =
+            this.scrollTopBeforeLoad + heightDifference;
+          this.setScrollParams();
+        } catch (error) {
+          Sentry.setContext('MessagesView', {
+            currentChat: this.currentChat,
+            listLoadingStatus: this.listLoadingStatus,
+            isLoadingPrevious: this.isLoadingPrevious,
+          });
+          Sentry.captureException(error);
           Sentry.captureMessage('Error fetching previous messages');
         } finally {
           this.isLoadingPrevious = false;

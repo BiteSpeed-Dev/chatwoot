@@ -490,15 +490,16 @@ export default {
       ) {
         this.isLoadingPrevious = true;
         try {
-          await this.$store.dispatch('fetchPreviousMessages', {
-            conversationId: this.currentChat.id,
-            before: this.currentChat.messages[0].id,
-          });
-          const heightDifference =
-            this.conversationPanel.scrollHeight - this.heightBeforeLoad;
-          this.conversationPanel.scrollTop =
-            this.scrollTopBeforeLoad + heightDifference;
-          this.setScrollParams();
+          throw new Error('Error fetching previous messages');
+          // await this.$store.dispatch('fetchPreviousMessages', {
+          //   conversationId: this.currentChat.id,
+          //   before: this.currentChat.messages[0].id,
+          // });
+          // const heightDifference =
+          //   this.conversationPanel.scrollHeight - this.heightBeforeLoad;
+          // this.conversationPanel.scrollTop =
+          //   this.scrollTopBeforeLoad + heightDifference;
+          // this.setScrollParams();
         } catch (error) {
           Sentry.captureException(error);
           Sentry.captureMessage('Error fetching previous messages');

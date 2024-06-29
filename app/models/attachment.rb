@@ -71,22 +71,20 @@ class Attachment < ApplicationRecord
   end
 
   def duplicate_for_message(new_message)
+    previous_attachment_id = id
     duplicated_attachment = dup
     duplicated_attachment.message_id = new_message.id
+    duplicated_attachment.save!
 
-    if file.attached?
-      attachment_file = Down.download(
-        url_for(file)
-      )
+    attachment_records = ActiveStorage::Attachment.where(record_type: 'Attachment', record_id: previous_attachment_id)
 
-      duplicated_attachment.file.attach(
-        io: attachment_file,
-        filename: attachment_file.original_filename,
-        content_type: attachment_file.content_type
-      )
+    attachment_records.each do |attachment_record|
+      ActiveStorage::Attachment.connection.execute <<-SQL.squish
+        INSERT INTO active_storage_attachments (name, record_type, record_id, blob_id, created_at)
+        VALUES ('#{attachment_record.name}', '#{attachment_record.record_type}', #{duplicated_attachment.id}, #{attachment_record.blob_id}, NOW())
+      SQL
     end
 
-    duplicated_attachment.save!
     duplicated_attachment
   end
 

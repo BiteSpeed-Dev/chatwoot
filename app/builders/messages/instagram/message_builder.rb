@@ -140,7 +140,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
 
       previous_message_attachments.each do |attachment|
-        new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+        attachment.duplicate_for_message(new_message)
       end
     end
 

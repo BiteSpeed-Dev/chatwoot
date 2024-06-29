@@ -70,6 +70,16 @@ class Attachment < ApplicationRecord
     end
   end
 
+  def duplicate_for_message(new_message)
+    duplicated_attachment = dup
+    duplicated_attachment.message_id = new_message.id
+
+    duplicated_attachment.file.attach(file.blob) if file.attached?
+
+    duplicated_attachment.save!
+    duplicated_attachment
+  end
+
   private
 
   def file_metadata

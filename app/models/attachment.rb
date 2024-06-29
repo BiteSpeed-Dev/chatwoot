@@ -74,7 +74,13 @@ class Attachment < ApplicationRecord
     duplicated_attachment = dup
     duplicated_attachment.message_id = new_message.id
 
-    duplicated_attachment.file.attach(file.blob) if file.attached?
+    if file.attached?
+      duplicated_attachment.file.attach(
+        io: StringIO.new(file.download),
+        filename: file.filename.to_s,
+        content_type: file.content_type
+      )
+    end
 
     duplicated_attachment.save!
     duplicated_attachment

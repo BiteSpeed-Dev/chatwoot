@@ -144,7 +144,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       previous_message_attachments.each do |attachment|
         new_attachment = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
 
-        attachment_record = ActiveStorage::Attachment.where(record_type: 'Attachment', record_id: id).first
+        attachment_record = ActiveStorage::Attachment.where(record_type: 'Attachment', record_id: attachment.id).first
 
         next if attachment_record.blank?
 

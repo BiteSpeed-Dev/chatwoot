@@ -71,10 +71,15 @@ class Attachment < ApplicationRecord
   end
 
   def duplicate_for_message(new_message)
-    dup.tap do |duplicated_attachment|
-      duplicated_attachment.message_id = new_message.id
-      duplicated_attachment.file.attach(file.blob)
+    duplicated_attachment = dup
+    duplicated_attachment.message_id = new_message.id
+
+    file.blob.open do |tempfile|
+      duplicated_attachment.file.attach({ io: tempfile, filename: file.filename })
     end
+
+    duplicated_attachment.save
+    duplicated_attachment
   end
 
   private

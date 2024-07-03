@@ -142,7 +142,9 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
 
       previous_message_attachments.each do |attachment|
         attachment_obj = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+        Rails.logger.info("Attachment: #{attachment_obj.inspect}")
         attachment_obj.file.attach(attachment.file.blob)
+        Rails.logger.info("Attachment: #{attachment_obj.inspect}")
         attachment_obj.save!
       end
 

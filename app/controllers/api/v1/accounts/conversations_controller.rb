@@ -47,7 +47,11 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
       previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
 
       previous_message_attachments.each do |attachment|
-        attachment.duplicate_for_message(new_message)
+        attachment_obj = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+
+        attachment_obj.file.attach(attachment.file.blob)
+
+        attachment_obj.save!
       end
     end
   end

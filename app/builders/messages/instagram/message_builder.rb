@@ -123,6 +123,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     @message.save_story_info(story_reply_attributes)
   end
 
+  # rubocop:disable Metrics/AbcSize
   def build_conversation
     @contact_inbox ||= contact.contact_inboxes.find_by!(source_id: message_source_id)
 
@@ -140,12 +141,17 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
 
       previous_message_attachments.each do |attachment|
-        attachment.duplicate_for_message(new_message)
+        attachment_obj = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+        attachment_obj.file.attach(attachment.file.blob)
+        attachment_obj.save!
       end
+
+      new_message.save!
     end
 
     new_conversation
   end
+  # rubocop:enable Metrics/AbcSize
 
   def fetch_previous_messages
     previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).first

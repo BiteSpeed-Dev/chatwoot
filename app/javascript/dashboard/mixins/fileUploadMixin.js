@@ -1,6 +1,7 @@
 import {
   MAXIMUM_FILE_UPLOAD_SIZE,
   MAXIMUM_FILE_UPLOAD_SIZE_TWILIO_SMS_CHANNEL,
+  ALLOWED_FILE_TYPES,
 } from 'shared/constants/messages';
 import { checkFileSizeLimit } from 'shared/helpers/FileHelper';
 import { DirectUpload } from 'activestorage';
@@ -8,6 +9,12 @@ import { DirectUpload } from 'activestorage';
 export default {
   methods: {
     onFileUpload(file) {
+      const fileExtension = `.${file.name.split('.').pop()}`;
+      if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
+        this.showAlert('Please Select a valid file');
+        return;
+      }
+
       if (this.globalConfig.directUploadsEnabled) {
         this.onDirectFileUpload(file);
       } else {

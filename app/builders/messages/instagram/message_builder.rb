@@ -4,6 +4,7 @@
 #    based on this we are showing "not sent from chatwoot" message in frontend
 #    Hence there is no need to set user_id in message for outgoing echo messages.
 
+# rubocop:disable Metrics/ClassLength
 class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   attr_reader :messaging
 
@@ -33,7 +34,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   private
 
   def attachments
-    @messaging[:message][:attachments] || {}
+    message[:attachments] || {}
   end
 
   def message_type
@@ -49,7 +50,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   end
 
   def message_is_unsupported?
-    message[:is_unsupported].present? && @messaging[:message][:is_unsupported] == true
+    message[:is_unsupported].present? && message[:is_unsupported] == true
   end
 
   def sender_id
@@ -61,7 +62,11 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   end
 
   def message
-    @messaging[:message]
+    postback? ? @messaging[:postback] : @messaging[:message]
+  end
+
+  def postback?
+    @messaging[:postback].present?
   end
 
   def contact
@@ -93,8 +98,31 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     last_conversation
   end
 
+  def template_message?
+    @messaging[:message].present? ? @messaging[:message][:is_echo].present? && @messaging[:message][:attachments][0][:type] == 'template' : false
+  end
+
+  # rubocop:disable Metrics/AbcSize
   def message_content
-    @messaging[:message][:text]
+    if @messaging[:message].present?
+      if @messaging[:message][:text].present?
+        @messaging[:message][:text]
+      elsif @messaging[:message][:is_echo].present? && @messaging[:message][:attachments][0][:type] == 'template'
+        element = @messaging[:message][:attachments][0][:payload][:generic][:elements][0]
+        element[:title]
+      end
+    elsif @messaging[:postback].present?
+      @messaging[:postback][:title].presence
+    end
+  end
+  # rubocop:enable Metrics/AbcSize
+
+  def template_message_content
+    return unless template_message?
+
+    element = @messaging[:message][:attachments][0][:payload][:generic][:elements][0]
+    buttons = element[:buttons].map.with_index { |button, index| "#{index + 1}. #{button[:title]}" }.join("\n")
+    "The above automated message was sent along with the following buttons:\n#{buttons}"
   end
 
   def story_reply_attributes
@@ -110,6 +138,9 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     return if message_content.blank? && all_unsupported_files?
 
     @message = conversation.messages.create!(message_params)
+
+    conversation.messages.create!(template_message_params) if template_message?
+
     save_story_id
 
     attachments.each do |attachment|
@@ -167,6 +198,24 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     }
   end
 
+  def template_message_params
+    params = {
+      account_id: conversation.account_id,
+      inbox_id: conversation.inbox_id,
+      message_type: message_type,
+      source_id: message_identifier,
+      content: template_message_content,
+      sender: @outgoing_echo ? nil : contact,
+      private: true,
+      content_attributes: {
+        in_reply_to_external_id: message_reply_attributes
+      }
+    }
+
+    params[:content_attributes][:is_unsupported] = true if message_is_unsupported?
+    params
+  end
+
   def message_params
     params = {
       account_id: conversation.account_id,
@@ -186,14 +235,14 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
 
   def already_sent_from_chatwoot?
     cw_message = conversation.messages.where(
-      source_id: @messaging[:message][:mid]
+      source_id: message[:mid]
     ).first
 
     cw_message.present?
   end
 
   def all_unsupported_files?
-    return if attachments.empty?
+    return false if attachments.empty?
 
     attachments_type = attachments.pluck(:type).uniq.first
     unsupported_file_type?(attachments_type)
@@ -225,3 +274,4 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   #   ],
   # }
 end
+# rubocop:enable Metrics/ClassLength

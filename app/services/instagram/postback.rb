@@ -1,4 +1,4 @@
-class Instagram::MessageText < Instagram::WebhooksBaseService
+class Instagram::Postback < Instagram::WebhooksBaseService
   include HTTParty
 
   attr_reader :messaging
@@ -60,11 +60,11 @@ class Instagram::MessageText < Instagram::WebhooksBaseService
   # rubocop:enable Metrics/AbcSize
 
   def agent_message_via_echo?
-    @messaging[:message][:is_echo].present?
+    @messaging[:postback][:is_echo].present?
   end
 
   def message_is_deleted?
-    @messaging[:message][:is_deleted].present?
+    @messaging[:postback][:is_deleted].present?
   end
 
   # if contact was present before find out contact_inbox to create message
@@ -79,7 +79,7 @@ class Instagram::MessageText < Instagram::WebhooksBaseService
 
   def unsend_message
     message_to_delete = @inbox.messages.find_by(
-      source_id: @messaging[:message][:mid]
+      source_id: @messaging[:postback][:mid]
     )
     return if message_to_delete.blank?
 
@@ -92,6 +92,7 @@ class Instagram::MessageText < Instagram::WebhooksBaseService
     return unless @contact_inbox
 
     Rails.logger.info("Creating message: #{@messaging}")
+
     Messages::Instagram::MessageBuilder.new(@messaging, @inbox, outgoing_echo: agent_message_via_echo?).perform
   end
 
@@ -131,8 +132,8 @@ class Instagram::MessageText < Instagram::WebhooksBaseService
       account_id: @conversation.account_id,
       inbox_id: @conversation.inbox_id,
       message_type: 'incoming',
-      source_id: @messaging[:message][:mid],
-      content: @messaging[:message][:text],
+      source_id: @messaging[:postback][:mid],
+      content: @messaging[:postback][:title],
       sender: @contact
     }
   end

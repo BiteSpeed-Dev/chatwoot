@@ -4,6 +4,11 @@ class Api::V1::Accounts::Conversations::DirectUploadsController < ActiveStorage:
   before_action :conversation
 
   def create
+    if params[:blob].present? && params[:blob][:byte_size].to_i > 5.megabytes
+      render json: { message: 'File size exceeds the maximum allowed (5 MB)' }, status: :unprocessable_entity
+      return
+    end
+
     return if @conversation.nil? || @current_account.nil?
 
     super

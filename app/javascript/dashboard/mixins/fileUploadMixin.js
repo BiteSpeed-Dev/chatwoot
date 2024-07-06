@@ -38,7 +38,18 @@ export default {
 
         upload.create((error, blob) => {
           if (error) {
-            this.showAlert(error);
+            if (
+              error ===
+              'Error creating Blob for "Sample JPG Image 30mb.jpeg". Status: 422'
+            ) {
+              this.showAlert(
+                this.$t('CONVERSATION.FILE_SIZE_LIMIT', {
+                  MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE,
+                })
+              );
+            } else {
+              this.showAlert(error);
+            }
           } else {
             this.attachFile({ file, blob });
           }

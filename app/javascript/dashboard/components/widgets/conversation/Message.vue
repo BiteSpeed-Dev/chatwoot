@@ -318,6 +318,9 @@ export default {
     externalError() {
       return this.contentAttributes.external_error || '';
     },
+    imageError() {
+      return this.contentAttributes.image_error;
+    },
     sender() {
       return this.data.sender || {};
     },
@@ -410,7 +413,11 @@ export default {
     },
     errorMessageTooltip() {
       if (this.isFailed) {
-        return this.externalError || this.$t(`CONVERSATION.SEND_FAILED`);
+        return (
+          this.externalError ||
+          this.imageError ||
+          this.$t(`CONVERSATION.SEND_FAILED`)
+        );
       }
       return '';
     },

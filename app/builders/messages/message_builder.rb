@@ -83,7 +83,11 @@ class Messages::MessageBuilder
     return unless @conversation.inbox.channel_type == 'Channel::WebWidget'
 
     @attachments.each do |uploaded_attachment|
-      @message.status = 'failed' if uploaded_attachment.size > 5 * 1024 * 1024
+      next unless uploaded_attachment.size > 5 * 1024 * 1024
+
+      @message.status = 'failed'
+      @message.content_attributes ||= {}
+      @message.content_attributes['image_error'] = 'File size was too large'
     end
   end
 

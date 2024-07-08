@@ -80,7 +80,7 @@ class Messages::MessageBuilder
   end
 
   def validate_attachment_size
-    return unless @conversation.inbox.channel_type == 'Channel::WebWidget'
+    return unless @conversation.inbox.channel_type == 'Channel::Api'
 
     @attachments.each do |uploaded_attachment|
       next unless uploaded_attachment.size > 5 * 1024 * 1024

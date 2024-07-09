@@ -123,6 +123,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     @message.save_story_info(story_reply_attributes)
   end
 
+  # rubocop:disable Metrics/AbcSize
   def build_conversation
     @contact_inbox ||= contact.contact_inboxes.find_by!(source_id: message_source_id)
 
@@ -144,8 +145,14 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       end
     end
 
+    new_conversation.messages.create!({
+                                        content: "A Conversation with #{contact.name.capitalize} started",
+                                        private: true
+                                      })
+
     new_conversation
   end
+  # rubocop:enable Metrics/AbcSize
 
   def fetch_previous_messages
     previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).first

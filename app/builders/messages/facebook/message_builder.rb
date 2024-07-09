@@ -73,9 +73,42 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
   end
 
   def build_conversation
-    Conversation.create!(conversation_params.merge(
-                           contact_inbox_id: @contact_inbox.id
-                         ))
+    @contact = Contacts.find_by(id: @contact_inbox.contact_id)
+
+    previous_messages = fetch_previous_messages
+
+    new_conversation = Conversation.create!(conversation_params.merge(
+                                              contact_inbox_id: @contact_inbox.id
+                                            ))
+    previous_messages.each do |message_attributes|
+      new_message = new_conversation.messages.create!(message_attributes.except('id'))
+
+      # duplicate the attachments if present
+      previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
+
+      previous_message_attachments.each do |attachment|
+        new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+      end
+    end
+
+    new_conversation.messages.create!({
+                                        content: "A Conversation with #{@contact.name.capitalize} started",
+                                        private: true
+                                      })
+
+    new_conversation
+  end
+
+  def fetch_previous_messages
+    previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).first
+
+    return [] if previous_conversation.blank?
+
+    previous_conversation.messages.map do |message|
+      message.attributes.except('conversation_id').merge(
+        additional_attributes: (message.additional_attributes || {}).merge(ignore_automation_rules: true)
+      )
+    end
   end
 
   def location_params(attachment)

@@ -43,7 +43,7 @@ class AdministratorNotifications::ChannelNotificationsMailer < ApplicationMailer
 
     subject = 'Contact Import Completed'
 
-    @action_url = Rails.applicatio.n.routes.url_helpers.rails_blob_url(resource.failed_records) if resource.failed_records.attached?
+    @action_url = Rails.application.routes.url_helpers.rails_blob_url(resource.failed_records) if resource.failed_records.attached?
     @action_url ||= "#{ENV.fetch('FRONTEND_URL', nil)}/app/accounts/#{resource.account.id}/contacts"
     @meta = {}
     @meta['failed_contacts'] = resource.total_records - resource.processed_records
@@ -67,7 +67,7 @@ class AdministratorNotifications::ChannelNotificationsMailer < ApplicationMailer
     send_mail_with_liquid(to: admin_emails + ['jaideep+chatwootreports@bitespeed.co'], subject: subject) and return
   end
 
-  def custom_conversation_report(csv_url, since_date, until_date, _custom_conversation_report, bitespeed_bot)
+  def custom_conversation_report(csv_url, since_date, until_date, bitespeed_bot)
     return unless smtp_config_set_or_development?
 
     subject = "Conversation Report from #{since_date} to #{until_date}"

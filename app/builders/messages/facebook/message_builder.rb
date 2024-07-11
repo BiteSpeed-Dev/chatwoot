@@ -134,7 +134,8 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
   end
 
   def fetch_previous_messages
-    previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).first
+    # apparantly the first one seems to be the newly created one in this case
+    previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).second
 
     return [] if previous_conversation.blank?
 

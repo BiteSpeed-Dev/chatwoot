@@ -145,14 +145,15 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       end
     end
 
-    new_private_message = new_conversation.messages.create!(private_message_params("A Conversation with #{contact.name.capitalize} started"))
+    new_private_message = new_conversation.messages.create!(private_message_params("A Conversation with #{contact.name.capitalize} started",
+                                                                                   new_conversation))
     Rails.logger.warn "new message id here: #{new_private_message.id}"
     new_conversation
   end
   # rubocop:enable Metrics/AbcSize
 
-  def private_message_params(content)
-    { account_id: conversation.account_id, inbox_id: conversation.inbox_id, message_type: :outgoing, content: content, private: true }
+  def private_message_params(content, new_conversation)
+    { account_id: new_conversation.account_id, inbox_id: new_conversation.inbox_id, message_type: :outgoing, content: content, private: true }
   end
 
   def fetch_previous_messages

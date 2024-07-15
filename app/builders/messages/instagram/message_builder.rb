@@ -123,6 +123,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     @message.save_story_info(story_reply_attributes)
   end
 
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def build_conversation
     @contact_inbox ||= contact.contact_inboxes.find_by!(source_id: message_source_id)
 
@@ -140,12 +141,35 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
 
       previous_message_attachments.each do |attachment|
-        new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+        # getting the active storage attachment
+        attachment_active_storage = ActiveStorage::Attachment.where(record_id: attachment.id)
+
+        if attachment_active_storage.exists?
+          attachment_active_storage.each do |active_storage_attachment|
+            # finding the blob for that active storage attachment
+            original_blob = ActiveStorage::Blob.find_by(id: active_storage_attachment.blob_id)
+
+            next unless original_blob
+
+            new_attachment = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+
+            ActiveStorage::Attachment.create!(
+              name: active_storage_attachment.name,
+              record_type: active_storage_attachment.record_type,
+              record_id: new_attachment.id,
+              blob_id: original_blob.id,
+              created_at: Time.zone.now
+            )
+          end
+        else
+          new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+        end
       end
     end
 
     new_conversation
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
   def fetch_previous_messages
     previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).first

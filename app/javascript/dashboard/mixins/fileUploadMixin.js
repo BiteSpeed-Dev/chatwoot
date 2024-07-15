@@ -11,7 +11,9 @@ export default {
     onFileUpload(file) {
       const fileExtension = `.${file.name.split('.').pop()}`;
       if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
-        this.showAlert('Please Select a valid file');
+        this.showAlert(
+          `Please select a valid file format, accepted formats are: ${ALLOWED_FILE_TYPES}`
+        );
         return;
       }
 

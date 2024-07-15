@@ -167,14 +167,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       end
     end
 
-    new_conversation.messages.create!({
-                                        content: "A Conversation with #{contact.name.capitalize} started",
-                                        private: true,
-                                        account_id: conversation.account_id,
-                                        inbox_id: conversation.inbox_id,
-                                        sender: nil,
-                                        message_type: :outgoing
-                                      })
+    new_conversation.messages.create!(private_message_params("A Conversation with #{contact.name.capitalize} started"))
 
     new_conversation
   end
@@ -215,6 +208,10 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
 
     params[:content_attributes][:is_unsupported] = true if message_is_unsupported?
     params
+  end
+
+  def private_message_params(content)
+    { account_id: conversation.account_id, inbox_id: conversation.inbox_id, message_type: :outgoing, content: content, private: true }
   end
 
   def already_sent_from_chatwoot?

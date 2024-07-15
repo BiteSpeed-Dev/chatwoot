@@ -21,6 +21,7 @@ class Messages::MessageBuilder
     @message = @conversation.messages.build(message_params)
     process_attachments
     process_emails
+    validate_attachment_size
     @message.save!
     @message
   end
@@ -75,6 +76,18 @@ class Messages::MessageBuilder
                              else
                                file_type(uploaded_attachment&.content_type)
                              end
+    end
+  end
+
+  def validate_attachment_size
+    return unless @conversation.inbox.channel_type == 'Channel::Api'
+
+    @attachments.each do |uploaded_attachment|
+      next unless uploaded_attachment.size > 5 * 1024 * 1024
+
+      @message.status = 'failed'
+      @message.content_attributes ||= {}
+      @message.content_attributes['image_error'] = 'File size was too large'
     end
   end
 

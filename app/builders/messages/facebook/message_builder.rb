@@ -74,10 +74,10 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
 
   # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def build_conversation
+    previous_messages = fetch_previous_messages
     new_conversation = Conversation.create!(conversation_params.merge(
                                               contact_inbox_id: @contact_inbox.id
                                             ))
-    previous_messages = fetch_previous_messages
 
     previous_messages.each do |message_attributes|
       new_message = new_conversation.messages.create!(message_attributes.except('id'))
@@ -135,7 +135,7 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
 
   def fetch_previous_messages
     # apparantly the first one seems to be the newly created one in this case
-    previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).second
+    previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).first
 
     return [] if previous_conversation.blank?
 

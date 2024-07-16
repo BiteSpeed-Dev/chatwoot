@@ -109,7 +109,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     return if @outgoing_echo && already_sent_from_chatwoot?
     return if message_content.blank? && all_unsupported_files?
 
-    Rails.logger.warn 'passing the conditions above'
+    Rails.logger.warn "passing the conditions above accountId#{conversation.account_id}"
 
     @message = conversation.messages.create!(message_params)
 

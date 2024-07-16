@@ -112,6 +112,8 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     Rails.logger.warn 'passing the conditions above'
 
     @message = conversation.messages.create!(message_params)
+
+    Rails.logger.warn "Created message: #{@message.id}"
     save_story_id
 
     attachments.each do |attachment|

@@ -193,7 +193,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     ).first
     conversation_message_2 = conversation_2.messages.where(
       source_id: @messaging[:message][:mid]
-    )
+    ).first
 
     conversation_message_1.present? || conversation_message_2.present?
   end

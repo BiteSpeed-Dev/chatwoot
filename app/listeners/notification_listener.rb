@@ -43,6 +43,7 @@ class NotificationListener < BaseListener
 
   def message_created(event)
     message = extract_message_and_account(event)[0]
+    return if message.additional_attributes.ignore_automation_rules == true
 
     Messages::MentionService.new(message: message).perform
     Messages::NewMessageNotificationService.new(message: message).perform

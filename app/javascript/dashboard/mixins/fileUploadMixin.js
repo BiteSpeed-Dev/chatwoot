@@ -1,6 +1,7 @@
 import {
   MAXIMUM_FILE_UPLOAD_SIZE,
   MAXIMUM_FILE_UPLOAD_SIZE_TWILIO_SMS_CHANNEL,
+  MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP,
 } from 'shared/constants/messages';
 import { checkFileSizeLimit } from 'shared/helpers/FileHelper';
 import { DirectUpload } from 'activestorage';
@@ -14,10 +15,14 @@ export default {
         this.onIndirectFileUpload(file);
       }
     },
+    getFileSizeConstant() {
+      if (this.isAWhatsappChannel) return MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP;
+      if (this.isATwilioSMSChannel)
+        return MAXIMUM_FILE_UPLOAD_SIZE_TWILIO_SMS_CHANNEL;
+      return MAXIMUM_FILE_UPLOAD_SIZE;
+    },
     onDirectFileUpload(file) {
-      const MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE = this.isATwilioSMSChannel
-        ? MAXIMUM_FILE_UPLOAD_SIZE_TWILIO_SMS_CHANNEL
-        : MAXIMUM_FILE_UPLOAD_SIZE;
+      const MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE = this.getFileSizeConstant();
 
       if (!file) {
         return;
@@ -52,12 +57,12 @@ export default {
       }
     },
     onIndirectFileUpload(file) {
-      const MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE = this.isATwilioSMSChannel
-        ? MAXIMUM_FILE_UPLOAD_SIZE_TWILIO_SMS_CHANNEL
-        : MAXIMUM_FILE_UPLOAD_SIZE;
+      const MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE = this.getFileSizeConstant();
+
       if (!file) {
         return;
       }
+
       if (checkFileSizeLimit(file, MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE)) {
         this.attachFile({ file });
       } else {

@@ -43,6 +43,7 @@ class NotificationListener < BaseListener
 
   def message_created(event)
     message = extract_message_and_account(event)[0]
+    Rails.logger.warn "Message: #{message}, Additional attributes: #{message.additional_attributes}, MessageId: #{message.id}"
     return if message.additional_attributes.ignore_automation_rules == true
 
     Messages::MentionService.new(message: message).perform

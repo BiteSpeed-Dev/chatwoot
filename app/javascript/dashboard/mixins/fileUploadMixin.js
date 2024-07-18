@@ -10,6 +10,9 @@ import { DirectUpload } from 'activestorage';
 export default {
   methods: {
     onFileUpload(file) {
+      /* eslint-disable no-console */
+      console.log(file?.name, file, this.isAWhatsappChannel);
+      if (!file) return;
       const fileExtension = `.${file.name.split('.').pop()}`;
       if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
         this.showAlert(

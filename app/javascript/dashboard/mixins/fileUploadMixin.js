@@ -24,6 +24,8 @@ export default {
         this.channelType === INBOX_TYPES.API &&
         !checkFileSizeLimit(file, MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP)
       ) {
+        /* eslint-disable no-console */
+        console.log(MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP, 'max file check');
         this.showAlert(
           this.$t('CONVERSATION.FILE_SIZE_LIMIT', {
             MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP,

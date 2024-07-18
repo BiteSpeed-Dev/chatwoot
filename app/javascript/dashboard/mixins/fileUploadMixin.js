@@ -11,15 +11,6 @@ import { INBOX_TYPES } from 'shared/mixins/inboxMixin';
 export default {
   methods: {
     onFileUpload(file) {
-      /* eslint-disable no-console */
-      console.log(
-        'checking few things here',
-        file?.name,
-        file,
-        this.isAWhatsappChannel,
-        this.channelType,
-        INBOX_TYPES.API
-      );
       if (!file) return;
       const fileExtension = `.${file.name.split('.').pop()}`;
       if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
@@ -33,9 +24,11 @@ export default {
         this.channelType === INBOX_TYPES.API &&
         !checkFileSizeLimit(file, MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP)
       ) {
-        this.$t('CONVERSATION.FILE_SIZE_LIMIT', {
-          MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP,
-        });
+        this.showAlert(
+          this.$t('CONVERSATION.FILE_SIZE_LIMIT', {
+            MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP,
+          })
+        );
         return;
       }
 

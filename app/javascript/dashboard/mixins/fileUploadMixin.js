@@ -16,6 +16,8 @@ export default {
       }
     },
     getFileSizeConstant() {
+      /* eslint-disable no-console */
+      console.log(this.isAWhatsappChannel, 'isWhatsappChannel');
       if (this.isAWhatsappChannel) return MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP;
       if (this.isATwilioSMSChannel)
         return MAXIMUM_FILE_UPLOAD_SIZE_TWILIO_SMS_CHANNEL;

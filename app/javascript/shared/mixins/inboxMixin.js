@@ -81,6 +81,8 @@ export default {
     },
     isAWhatsappChannel() {
       const { medium: medium = '' } = this.inbox;
+      /* eslint-disable no-console */
+      console.log(medium, 'medium here');
       return medium === 'whatsapp';
     },
     isAWhatsAppCloudChannel() {

@@ -2,6 +2,7 @@ import {
   MAXIMUM_FILE_UPLOAD_SIZE,
   MAXIMUM_FILE_UPLOAD_SIZE_TWILIO_SMS_CHANNEL,
   ALLOWED_FILE_TYPES,
+  MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP,
 } from 'shared/constants/messages';
 import { checkFileSizeLimit } from 'shared/helpers/FileHelper';
 import { DirectUpload } from 'activestorage';
@@ -14,6 +15,13 @@ export default {
         this.showAlert(
           `Please select a valid file format, accepted formats are: ${ALLOWED_FILE_TYPES}`
         );
+        return;
+      }
+
+      if (!checkFileSizeLimit(file, MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP)) {
+        this.$t('CONVERSATION.FILE_SIZE_LIMIT', {
+          MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP,
+        });
         return;
       }
 

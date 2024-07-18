@@ -79,6 +79,12 @@ export default {
       const { medium: medium = '' } = this.inbox;
       return this.isATwilioChannel && medium === 'whatsapp';
     },
+    isAWhatsappChannel() {
+      const { medium: medium = '' } = this.inbox;
+      /* eslint-disable no-console */
+      console.log(medium, 'medium here');
+      return medium === 'whatsapp';
+    },
     isAWhatsAppCloudChannel() {
       return (
         this.channelType === INBOX_TYPES.WHATSAPP &&

@@ -115,7 +115,7 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
       end
     end
 
-    new_conversation.messages.create!(private_message_params("A Conversation with #{contact.name.capitalize} started",
+    new_conversation.messages.create!(private_message_params("Conversation with #{contact.name.capitalize} started",
                                                              new_conversation))
     new_conversation
   end

@@ -167,9 +167,16 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       end
     end
 
+    new_conversation.messages.create!(private_message_params("A Conversation with #{contact.name.capitalize} started",
+                                                             new_conversation))
     new_conversation
   end
+
   # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+  
+  def private_message_params(content, new_conversation)
+    { account_id: new_conversation.account_id, inbox_id: new_conversation.inbox_id, message_type: :outgoing, content: content, private: true }
+  end
 
   def fetch_previous_messages
     previous_conversation = Conversation.where(conversation_params).order(created_at: :desc).first
@@ -209,11 +216,10 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   end
 
   def already_sent_from_chatwoot?
-    cw_message = conversation.messages.where(
-      source_id: @messaging[:message][:mid]
-    ).first
-
-    cw_message.present?
+    recent_conversations = instagram_direct_message_conversation.order(created_at: :desc).limit(2)
+    recent_conversations.any? do |conversation|
+      conversation.messages.exists?(source_id: @messaging[:message][:mid])
+    end
   end
 
   def all_unsupported_files?

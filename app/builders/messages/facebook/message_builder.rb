@@ -34,6 +34,10 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
     true
   end
 
+  def contact
+    @contact ||= @inbox.contact_inboxes.find_by(source_id: message_source_id)&.contact
+  end
+
   private
 
   def build_contact_inbox

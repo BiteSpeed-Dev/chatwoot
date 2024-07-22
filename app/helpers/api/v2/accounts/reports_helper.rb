@@ -4,7 +4,10 @@ module Api::V2::Accounts::ReportsHelper
     range_start = DateTime.strptime(current_range[:since].to_s, '%s')
     range_end = DateTime.strptime(current_range[:until].to_s, '%s')
     sanitized_range = { since: range_start, until: range_end }
-    AgentReportJob.new.generate_custom_report(Current.account, sanitized_range, params)
+
+    bitespeed_bot = Current.user.email.ends_with?('@bitespeed.co')
+
+    AgentReportJob.new.generate_custom_report(Current.account, sanitized_range, params, bitespeed_bot)
   end
 
   def generate_conversations_report

@@ -2,12 +2,12 @@ require 'json'
 require 'csv'
 
 class AgentReportJob < ApplicationJob
-  def generate_custom_report(account, range, params)
+  def generate_custom_report(account, range, params, bitespeed_bot: false)
     set_statement_timeout
 
     current_date = Date.current
 
-    process_account(account, current_date, range, params, 'custom')
+    process_account(account, current_date, range, params, bitespeed_bot, 'custom')
   end
 
   def set_statement_timeout
@@ -33,7 +33,8 @@ class AgentReportJob < ApplicationJob
     ]
   end
 
-  def process_account(account, _current_date, range, params, frequency = 'daily')
+  # rubocop:disable Metrics/ParameterLists
+  def process_account(account, _current_date, range, params, _bitespeed_bot, frequency = 'daily')
     report = generate_report(account, params)
 
     if report.present?
@@ -43,7 +44,7 @@ class AgentReportJob < ApplicationJob
       end_date = range[:until].strftime('%Y-%m-%d')
 
       csv_content = generate_csv(report, start_date, end_date)
-      upload_csv(account.id, start_date, end_date, csv_content, frequency)
+      upload_csv(account.id, range, csv_content, frequency)
     else
       Rails.logger.info "No data found for account_id: #{account.id}"
     end
@@ -56,6 +57,7 @@ class AgentReportJob < ApplicationJob
       [agent.name] + generate_readable_report_metrics(agent_report)
     end
   end
+  # rubocop:enable Metrics/ParameterLists
 
   def generate_csv(results, start_date, end_date)
     CSV.generate(headers: true) do |csv|
@@ -71,8 +73,11 @@ class AgentReportJob < ApplicationJob
     end
   end
 
-  def upload_csv(account_id, start_date, end_date, csv_content, frequency)
+  def upload_csv(account_id, range, csv_content, frequency, bitespeed_bot)
     # Determine the file name based on the frequency
+    start_date = range[:since].strftime('%Y-%m-%d')
+    end_date = range[:until].strftime('%Y-%m-%d')
+
     file_name = "#{frequency}_agent_report_#{account_id}_#{end_date}.csv"
 
     # For testing locally, uncomment below
@@ -98,7 +103,7 @@ class AgentReportJob < ApplicationJob
     elsif frequency == 'daily'
       mailer.daily_conversation_report(csv_url, end_date).deliver_now
     else
-      mailer.custom_conversation_report(csv_url, start_date, end_date).deliver_now
+      mailer.custom_conversation_report(csv_url, start_date, end_date, bitespeed_bot).deliver_now
     end
   end
 end

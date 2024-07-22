@@ -35,7 +35,7 @@ class Messages::Facebook::MessageBuilder < Messages::Messenger::MessageBuilder
   end
 
   def contact
-    @contact ||= @inbox.contact_inboxes.find_by(source_id: message_source_id)&.contact
+    @contact ||= @inbox.contact_inboxes.find_by(source_id: @sender_id)&.contact
   end
 
   private

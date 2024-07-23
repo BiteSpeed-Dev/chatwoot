@@ -94,6 +94,6 @@ class AgentReportJob < ApplicationJob
     # Send email with the CSV URL
     mailer = AdministratorNotifications::ChannelNotificationsMailer.with(account: Account.find(account_id))
 
-    mailer.custom_agent_report(csv_url, start_date, end_date, bitespeed_bot)
+    mailer.custom_agent_report(csv_url, start_date, end_date, bitespeed_bot).deliver_now
   end
 end

@@ -2,12 +2,10 @@ require 'json'
 require 'csv'
 
 class AgentReportJob < ApplicationJob
-  def generate_custom_report(account, range, params, bitespeed_bot: false)
+  def generate_custom_report(account, range, params, bitespeed_bot)
     set_statement_timeout
 
-    current_date = Date.current
-
-    process_account(account, current_date, range, params, bitespeed_bot, 'custom')
+    process_account(account, range, params, bitespeed_bot, 'custom')
   end
 
   def set_statement_timeout
@@ -33,8 +31,7 @@ class AgentReportJob < ApplicationJob
     ]
   end
 
-  # rubocop:disable Metrics/ParameterLists
-  def process_account(account, _current_date, range, params, _bitespeed_bot, frequency = 'daily')
+  def process_account(account, range, params, bitespeed_bot, frequency = 'daily')
     report = generate_report(account, params)
 
     if report.present?
@@ -44,7 +41,7 @@ class AgentReportJob < ApplicationJob
       end_date = range[:until].strftime('%Y-%m-%d')
 
       csv_content = generate_csv(report, start_date, end_date)
-      upload_csv(account.id, range, csv_content, frequency)
+      upload_csv(account.id, range, csv_content, frequency, bitespeed_bot)
     else
       Rails.logger.info "No data found for account_id: #{account.id}"
     end
@@ -57,7 +54,6 @@ class AgentReportJob < ApplicationJob
       [agent.name] + generate_readable_report_metrics(agent_report)
     end
   end
-  # rubocop:enable Metrics/ParameterLists
 
   def generate_csv(results, start_date, end_date)
     CSV.generate(headers: true) do |csv|
@@ -98,12 +94,6 @@ class AgentReportJob < ApplicationJob
     # Send email with the CSV URL
     mailer = AdministratorNotifications::ChannelNotificationsMailer.with(account: Account.find(account_id))
 
-    if frequency == 'weekly'
-      mailer.weekly_conversation_report(csv_url, start_date, end_date).deliver_now
-    elsif frequency == 'daily'
-      mailer.daily_conversation_report(csv_url, end_date).deliver_now
-    else
-      mailer.custom_conversation_report(csv_url, start_date, end_date, bitespeed_bot).deliver_now
-    end
+    mailer.custom_agent_report(csv_url, start_date, end_date, bitespeed_bot)
   end
 end

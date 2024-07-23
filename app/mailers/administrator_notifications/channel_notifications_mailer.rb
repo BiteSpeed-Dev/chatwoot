@@ -78,7 +78,7 @@ class AdministratorNotifications::ChannelNotificationsMailer < ApplicationMailer
   end
 
   def custom_agent_report(csv_url, since_date, until_date, bitespeed_bot)
-    return if !smtp_config_set_or_development? && !return
+    return unless smtp_config_set_or_development?
 
     subject = "Agent Report from #{since_date} to #{until_date}"
     @action_url = csv_url

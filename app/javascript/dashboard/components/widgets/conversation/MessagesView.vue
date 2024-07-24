@@ -102,33 +102,34 @@
 
 <script>
 // components
-import ReplyBox from './ReplyBox.vue';
-import Message from './Message.vue';
-import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 import Banner from 'dashboard/components/ui/Banner.vue';
+import Message from './Message.vue';
+import ReplyBox from './ReplyBox.vue';
+import ConversationLabelSuggestion from './conversation/LabelSuggestion.vue';
 
 // stores and apis
 import { mapGetters } from 'vuex';
 
 // mixins
+import aiMixin from 'dashboard/mixins/aiMixin';
+import configMixin from 'shared/mixins/configMixin';
+import inboxMixin, { INBOX_FEATURES } from 'shared/mixins/inboxMixin';
+import keyboardEventListenerMixins from 'shared/mixins/keyboardEventListenerMixins';
 import conversationMixin, {
   filterDuplicateSourceMessages,
 } from '../../../mixins/conversations';
-import inboxMixin, { INBOX_FEATURES } from 'shared/mixins/inboxMixin';
-import configMixin from 'shared/mixins/configMixin';
-import keyboardEventListenerMixins from 'shared/mixins/keyboardEventListenerMixins';
-import aiMixin from 'dashboard/mixins/aiMixin';
 
 // utils
+import { LocalStorage } from 'shared/helpers/localStorage';
 import { getTypingUsersText } from '../../../helper/commons';
 import { calculateScrollTop } from './helpers/scrollTopCalculationHelper';
-import { LocalStorage } from 'shared/helpers/localStorage';
 
 // constants
-import { BUS_EVENTS } from 'shared/constants/busEvents';
-import { REPLY_POLICY } from 'shared/constants/links';
+import * as Sentry from '@sentry/vue';
 import wootConstants from 'dashboard/constants/globals';
 import { LOCAL_STORAGE_KEYS } from 'dashboard/constants/localStorage';
+import { BUS_EVENTS } from 'shared/constants/busEvents';
+import { REPLY_POLICY } from 'shared/constants/links';
 
 export default {
   components: {
@@ -324,12 +325,12 @@ export default {
   },
 
   created() {
-    bus.$on(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
+    this.$emitter.on(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
     // when a new message comes in, we refetch the label suggestions
-    bus.$on(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS, this.fetchSuggestions);
+    this.$emitter.on(BUS_EVENTS.FETCH_LABEL_SUGGESTIONS, this.fetchSuggestions);
     // when a message is sent we set the flag to true this hides the label suggestions,
     // until the chat is changed and the flag is reset in the watch for currentChat
-    bus.$on(BUS_EVENTS.MESSAGE_SENT, () => {
+    this.$emitter.on(BUS_EVENTS.MESSAGE_SENT, () => {
       this.messageSentSinceOpened = true;
     });
   },
@@ -396,7 +397,7 @@ export default {
       this.$store.dispatch('fetchAllAttachments', this.currentChat.id);
     },
     removeBusListeners() {
-      bus.$off(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
+      this.$emitter.off(BUS_EVENTS.SCROLL_TO_MESSAGE, this.onScrollToMessage);
     },
     onScrollToMessage({ messageId = '' } = {}) {
       this.$nextTick(() => {
@@ -499,7 +500,13 @@ export default {
             this.scrollTopBeforeLoad + heightDifference;
           this.setScrollParams();
         } catch (error) {
-          // Ignore Error
+          Sentry.setContext('MessagesView', {
+            currentChat: this.currentChat,
+            listLoadingStatus: this.listLoadingStatus,
+            isLoadingPrevious: this.isLoadingPrevious,
+          });
+          Sentry.captureException(error);
+          Sentry.captureMessage('Error fetching previous messages');
         } finally {
           this.isLoadingPrevious = false;
         }
@@ -514,7 +521,7 @@ export default {
       } else {
         this.hasUserScrolled = true;
       }
-      bus.$emit(BUS_EVENTS.ON_MESSAGE_LIST_SCROLL);
+      this.$emitter.emit(BUS_EVENTS.ON_MESSAGE_LIST_SCROLL);
       this.fetchPreviousMessages(e.target.scrollTop);
     },
 

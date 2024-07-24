@@ -44,6 +44,12 @@ export default {
     whatsAppAPIProvider() {
       return this.inbox.provider || '';
     },
+    isAMicrosoftInbox() {
+      return this.isAnEmailChannel && this.inbox.provider === 'microsoft';
+    },
+    isAGoogleInbox() {
+      return this.isAnEmailChannel && this.inbox.provider === 'google';
+    },
     isAPIInbox() {
       return this.channelType === INBOX_TYPES.API;
     },
@@ -78,6 +84,10 @@ export default {
     isATwilioWhatsAppChannel() {
       const { medium: medium = '' } = this.inbox;
       return this.isATwilioChannel && medium === 'whatsapp';
+    },
+    isAWhatsappChannel() {
+      const { medium: medium = '' } = this.inbox;
+      return medium === 'whatsapp';
     },
     isAWhatsAppCloudChannel() {
       return (

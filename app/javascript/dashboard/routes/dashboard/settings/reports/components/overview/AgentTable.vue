@@ -57,10 +57,13 @@ export default {
   },
   computed: {
     tableData() {
+      if (!this.agentMetrics.length || !this.agents.length) return [];
       return this.agentMetrics
-        .filter(agentMetric => this.getAgentInformation(agentMetric.id))
+        .filter(agentMetric =>
+          this.getAgentInformation(agentMetric.assignee_id)
+        )
         .map(agent => {
-          const agentInformation = this.getAgentInformation(agent.id);
+          const agentInformation = this.getAgentInformation(agent.assignee_id);
           return {
             agent: agentInformation.name || agentInformation.available_name,
             email: agentInformation.email,

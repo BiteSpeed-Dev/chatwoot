@@ -118,11 +118,41 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   # rubocop:enable Metrics/AbcSize
 
   def template_message_content
+    return if @messaging[:message].blank?
+    return unless @messaging[:message][:is_echo].present? && @messaging[:message][:attachments][0][:type] == 'template'
+
+    elements = @messaging[:message][:attachments][0][:payload][:generic][:elements]
+    elements.pluck(:title)
+  end
+
+  def template_attachments
     return unless template_message?
 
-    element = @messaging[:message][:attachments][0][:payload][:generic][:elements][0]
-    buttons = element[:buttons].map.with_index { |button, index| "#{index + 1}. #{button[:title]}" }.join("\n")
-    "The above automated message was sent along with the following buttons:\n#{buttons}"
+    elements = @messaging[:message][:attachments][0][:payload][:generic][:elements]
+    elements.map do |element|
+      {
+        'type' => 'image',
+        'payload' => {
+          'url' => element[:image_url]
+        }
+      }
+    end
+  end
+
+  def template_message_button_content
+    return unless template_message?
+
+    elements = @messaging[:message][:attachments][0][:payload][:generic][:elements]
+    elements.map do |element|
+      buttons = element[:buttons].map.with_index { |button, index| "#{index + 1}. #{button[:title]}" }.join("\n")
+      buttons_content = "The above automated message was sent along with the following buttons:\n#{buttons}"
+
+      if element[:subtitle].present?
+        "#{element[:subtitle]}\n\n#{buttons_content}"
+      else
+        buttons_content
+      end
+    end
   end
 
   def story_reply_attributes
@@ -133,13 +163,24 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     message[:reply_to][:mid] if message[:reply_to].present? && message[:reply_to][:mid].present?
   end
 
+  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/PerceivedComplexity
   def build_message
     return if @outgoing_echo && already_sent_from_chatwoot?
     return if message_content.blank? && all_unsupported_files?
 
-    @message = conversation.messages.create!(message_params)
-
-    conversation.messages.create!(template_message_params) if template_message?
+    if template_message?
+      template_valid_attachments = template_attachments || []
+      template_message_params.zip(template_button_message_params,
+                                  template_valid_attachments).each do |message_params, button_params, attachment_params|
+        @message = conversation.messages.create!(message_params)
+        process_attachment(attachment_params) if attachment_params.is_a?(Hash) && attachment_params['payload']['url'].present?
+        conversation.messages.create!(button_params)
+      end
+    else
+      @message = conversation.messages.create!(message_params)
+    end
 
     save_story_id
 
@@ -147,6 +188,9 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       process_attachment(attachment)
     end
   end
+  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/PerceivedComplexity
 
   def save_story_id
     return if story_reply_attributes.blank?
@@ -204,7 +248,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   end
 
   # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
-  
+
   def private_message_params(content, new_conversation)
     { account_id: new_conversation.account_id, inbox_id: new_conversation.inbox_id, message_type: :outgoing, content: content, private: true }
   end
@@ -229,22 +273,43 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     }
   end
 
-  def template_message_params
-    params = {
-      account_id: conversation.account_id,
-      inbox_id: conversation.inbox_id,
-      message_type: message_type,
-      source_id: message_identifier,
-      content: template_message_content,
-      sender: @outgoing_echo ? nil : contact,
-      private: true,
-      content_attributes: {
-        in_reply_to_external_id: message_reply_attributes
+  def template_button_message_params
+    template_message_button_content.map do |content|
+      params = {
+        account_id: conversation.account_id,
+        inbox_id: conversation.inbox_id,
+        message_type: message_type,
+        source_id: message_identifier,
+        content: content,
+        sender: @outgoing_echo ? nil : contact,
+        private: true,
+        content_attributes: {
+          in_reply_to_external_id: message_reply_attributes
+        }
       }
-    }
 
-    params[:content_attributes][:is_unsupported] = true if message_is_unsupported?
-    params
+      params[:content_attributes][:is_unsupported] = true if message_is_unsupported?
+      params
+    end
+  end
+
+  def template_message_params
+    template_message_content.map do |content|
+      params = {
+        account_id: conversation.account_id,
+        inbox_id: conversation.inbox_id,
+        message_type: message_type,
+        source_id: message_identifier,
+        content: content,
+        sender: @outgoing_echo ? nil : contact,
+        content_attributes: {
+          in_reply_to_external_id: message_reply_attributes
+        }
+      }
+
+      params[:content_attributes][:is_unsupported] = true if message_is_unsupported?
+      params
+    end
   end
 
   def message_params

@@ -119,12 +119,6 @@ export default {
     },
   },
   methods: {
-    onPageNumberChange(pageIndex) {
-      this.$emit('page-change', pageIndex);
-    },
-    getAgentInformation(id) {
-      return this.agents?.find(agent => agent.id === Number(id));
-    },
     getAgentMetrics(id) {
       return (
         this.agentMetrics.find(metrics => metrics.assignee_id === Number(id)) ||

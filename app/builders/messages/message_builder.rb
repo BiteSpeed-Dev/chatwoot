@@ -22,6 +22,7 @@ class Messages::MessageBuilder
   def perform
     @message = @conversation.messages.build(message_params)
     process_attachments
+    process_url_attachments
     process_emails
     @message.save!
     @message
@@ -61,15 +62,7 @@ class Messages::MessageBuilder
     {}
   end
 
-  # rubocop:disable Metrics/MethodLength
   def process_attachments
-    @url_attachments.each do |url_attachment|
-      @message.attachments.build(
-        account_id: @message.account_id,
-        external_url: url_attachment[:url],
-        file_type: url_attachment[:type]
-      )
-    end
     return if @attachments.blank?
 
     @attachments.each do |uploaded_attachment|
@@ -87,7 +80,18 @@ class Messages::MessageBuilder
                              end
     end
   end
-  # rubocop:enable Metrics/MethodLength
+
+  def process_url_attachments
+    return if @url_attachments.blank?
+
+    @url_attachments.each do |url_attachment|
+      @message.attachments.build(
+        account_id: @message.account_id,
+        external_url: url_attachment[:url],
+        file_type: url_attachment[:type]
+      )
+    end
+  end
 
   def process_emails
     return unless @conversation.inbox&.inbox_type == 'Email'

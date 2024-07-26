@@ -9,6 +9,7 @@ class Messages::MessageBuilder
     @user = user
     @message_type = params[:message_type] || 'outgoing'
     @attachments = params[:attachments]
+    @url_attachments = params[:url_attachments]
     @automation_rule = content_attributes&.dig(:automation_rule_id)
     @ignore_automation_rules = params[:ignore_automation_rules]
     @disable_notifications = params[:disable_notifications]
@@ -60,7 +61,15 @@ class Messages::MessageBuilder
     {}
   end
 
+  # rubocop:disable Metrics/MethodLength
   def process_attachments
+    @url_attachments.each do |url_attachment|
+      @message.attachments.build(
+        account_id: @message.account_id,
+        external_url: url_attachment[:url],
+        file_type: url_attachment[:type]
+      )
+    end
     return if @attachments.blank?
 
     @attachments.each do |uploaded_attachment|
@@ -78,6 +87,7 @@ class Messages::MessageBuilder
                              end
     end
   end
+  # rubocop:enable Metrics/MethodLength
 
   def process_emails
     return unless @conversation.inbox&.inbox_type == 'Email'

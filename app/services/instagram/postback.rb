@@ -88,10 +88,7 @@ class Instagram::Postback < Instagram::WebhooksBaseService
   end
 
   def create_message
-    Rails.logger.info("Creating message: #{@messaging}")
     return unless @contact_inbox
-
-    Rails.logger.info("Creating message: #{@messaging}")
 
     Messages::Instagram::MessageBuilder.new(@messaging, @inbox, outgoing_echo: agent_message_via_echo?).perform
   end

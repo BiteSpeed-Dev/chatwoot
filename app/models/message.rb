@@ -221,6 +221,7 @@ class Message < ApplicationRecord
                                 .where.not(sender_type: 'AgentBot')
                                 .where.not(private: true)
                                 .where("(additional_attributes->'campaign_id') is null").count > 1
+    return false if backpopulated_message?
 
     true
   end
@@ -290,6 +291,8 @@ class Message < ApplicationRecord
   end
 
   def update_waiting_since
+    return if backpopulated_message?
+
     if human_response? && !private && conversation.waiting_since.present?
       Rails.configuration.dispatcher.dispatch(
         REPLY_CREATED, Time.zone.now, waiting_since: conversation.waiting_since, message: self
@@ -307,6 +310,10 @@ class Message < ApplicationRecord
       content_attributes['automation_rule_id'].blank? &&
       additional_attributes['campaign_id'].blank? &&
       sender.is_a?(User)
+  end
+
+  def backpopulated_message?
+    additional_attributes['ignore_automation_rules'] == true
   end
 
   def dispatch_create_events

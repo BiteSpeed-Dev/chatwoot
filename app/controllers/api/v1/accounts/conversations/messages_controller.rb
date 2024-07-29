@@ -7,8 +7,16 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
     user = Current.user || @resource
     mb = Messages::MessageBuilder.new(user, @conversation, params)
     @message = mb.perform
+    update_conversation_status
   rescue StandardError => e
     render_could_not_create_error(e.message)
+  end
+
+  def update_conversation_status
+    # // change conversation status to open if resolved or snoozed
+    return unless @conversation.status == 'resolved' || @conversation.status == 'snoozed'
+
+    @conversation.update!(status: :open)
   end
 
   def destroy

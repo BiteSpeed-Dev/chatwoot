@@ -220,8 +220,8 @@ class Message < ApplicationRecord
     return false if conversation.messages.outgoing
                                 .where.not(sender_type: 'AgentBot')
                                 .where.not(private: true)
-                                .where("(additional_attributes->'campaign_id') is null").count > 1
-    return false if backpopulated_message?
+                                .where("(additional_attributes->'campaign_id') is null")
+                                .where("(additional_attributes->'ignore_automation_rules') is null").count > 1
 
     true
   end
@@ -291,8 +291,6 @@ class Message < ApplicationRecord
   end
 
   def update_waiting_since
-    return if backpopulated_message?
-
     if human_response? && !private && conversation.waiting_since.present?
       Rails.configuration.dispatcher.dispatch(
         REPLY_CREATED, Time.zone.now, waiting_since: conversation.waiting_since, message: self
@@ -319,6 +317,8 @@ class Message < ApplicationRecord
   def dispatch_create_events
     # we are waiting for 2 seconds to dispatch the event so that the message also has attachments with it when sending back the event to frontend
     DelayDispatchEventJob.set(wait: 2.seconds).perform_later(event_name: MESSAGE_CREATED, timestamp: Time.zone.now, message_id: id)
+
+    return if backpopulated_message?
 
     if valid_first_reply?
       Rails.configuration.dispatcher.dispatch(FIRST_REPLY_CREATED, Time.zone.now, message: self, performed_by: Current.executed_by)

@@ -1,3 +1,4 @@
+# rubocop:disable Metrics/ClassLength
 class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseController
   include Events::Types
   include DateRangeHelper
@@ -30,6 +31,9 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   def show; end
 
   # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable Metrics/CyclomaticComplexity
+  # rubocop:disable Metrics/PerceivedComplexity
   def create
     previous_messages = fetch_previous_messages if params[:populate_historical_messages] == 'true'
 
@@ -47,12 +51,39 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
       previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
 
       previous_message_attachments.each do |attachment|
-        new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+        # getting the active storage attachment
+        attachment_active_storage = ActiveStorage::Attachment.where(record_id: attachment.id)
+
+        if attachment_active_storage.exists?
+          attachment_active_storage.each do |active_storage_attachment|
+            # finding the blob for that active storage attachment
+            original_blob = ActiveStorage::Blob.find_by(id: active_storage_attachment.blob_id)
+
+            next unless original_blob
+
+            new_attachment = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+
+            ActiveStorage::Attachment.create!(
+              name: active_storage_attachment.name,
+              record_type: active_storage_attachment.record_type,
+              record_id: new_attachment.id,
+              blob_id: original_blob.id,
+              created_at: Time.zone.now
+            )
+          end
+        else
+          new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+        end
       end
     end
+
+    new_conversation
   end
 
   # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/MethodLength
+  # rubocop:enable Metrics/CyclomaticComplexity
+  # rubocop:enable Metrics/PerceivedComplexity
   def update
     @conversation.update!(permitted_update_params)
   end
@@ -144,7 +175,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
     previous_conversation.messages.order(created_at: :asc).map do |message|
       message.attributes.except('conversation_id').merge(
-        additional_attributes: (message.additional_attributes || {}).merge(ignore_automation_rules: true)
+        additional_attributes: (message.additional_attributes || {}).merge(ignore_automation_rules: true, disable_notifications: true)
       )
     end
   end
@@ -222,3 +253,4 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 end
 
 Api::V1::Accounts::ConversationsController.prepend_mod_with('Api::V1::Accounts::ConversationsController')
+# rubocop:enable Metrics/ClassLength

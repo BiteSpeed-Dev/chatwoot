@@ -77,7 +77,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
       end
     end
 
-    new_conversation
+    @conversation
   end
 
   # rubocop:enable Metrics/AbcSize

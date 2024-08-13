@@ -79,8 +79,9 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
       end
     end
 
-    set_conversation_status
-    @status = @conversation.save!
+    Conversation.update(@conversation.id, status: params[:status]) if params[:status].present?
+
+    @conversation
   end
 
   # rubocop:enable Metrics/AbcSize

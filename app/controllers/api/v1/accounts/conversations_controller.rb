@@ -38,7 +38,9 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     previous_messages = fetch_previous_messages if params[:populate_historical_messages] == 'true'
 
     ActiveRecord::Base.transaction do
-      @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
+      # pass all params except params[:status]
+      @conversation = ConversationBuilder.new(params: params.except(:status), contact_inbox: @contact_inbox).perform
+      # @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
       Messages::MessageBuilder.new(Current.user, @conversation, params[:message]).perform if params[:message].present?
     end
 
@@ -77,7 +79,8 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
       end
     end
 
-    @conversation
+    set_conversation_status
+    @status = @conversation.save!
   end
 
   # rubocop:enable Metrics/AbcSize

@@ -15,6 +15,7 @@ class AutoAssignment::AgentAssignmentService
   def perform
     new_assignee = find_assignee
     if new_assignee.nil?
+      sleep(5)
       Rails.logger.info "No agents were assigned, #{conversation.account_id}"
       conversation.messages.create!(activity_message_params('Conversation not assigned to any agent as no agents were online'))
     else

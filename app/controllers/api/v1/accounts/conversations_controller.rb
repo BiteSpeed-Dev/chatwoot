@@ -38,9 +38,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     previous_messages = fetch_previous_messages if params[:populate_historical_messages] == 'true'
 
     ActiveRecord::Base.transaction do
-      # pass all params except params[:status]
-      @conversation = ConversationBuilder.new(params: params.except(:status), contact_inbox: @contact_inbox).perform
-      # @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
+      @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
       Messages::MessageBuilder.new(Current.user, @conversation, params[:message]).perform if params[:message].present?
 
       next unless params[:populate_historical_messages] == 'true'
@@ -77,8 +75,6 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
           end
         end
       end
-
-      Conversation.update(@conversation.id, status: params[:status]) if params[:status].present? && params[:status] != 'open'
     end
 
     @conversation

@@ -18,8 +18,9 @@ class AutoAssignment::AgentAssignmentService
       sleep(5)
       Rails.logger.info "No agents were assigned, #{conversation.account_id}"
       # conversation.messages.create!(activity_message_params('Conversation not assigned to any agent as no agents were online'))
-      Conversations::ActivityMessageJob.perform_later(conversation,
-                                                      activity_message_params('Conversation not assigned to any agent as no agents were online'))
+      content = 'Conversation not assigned to any agent as no agents were online'
+      Conversations::ActivityMessageJob.set(wait: 5.seconds).perform_later(conversation,
+                                                                           activity_message_params(content))
 
     else
       conversation.update(assignee: new_assignee)

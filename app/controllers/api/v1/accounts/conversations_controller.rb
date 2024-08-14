@@ -79,7 +79,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
       end
     end
 
-    Conversation.update(@conversation.id, status: params[:status]) if params[:status].present?
+    Conversation.update(@conversation.id, status: params[:status]) if params[:status].present? && params[:status] != 'open'
 
     @conversation
   end

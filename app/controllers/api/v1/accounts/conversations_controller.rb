@@ -46,6 +46,9 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
     return unless params[:populate_historical_messages] == 'true'
 
+    # sleep for 2 seconds to make sure the conversation is created
+    sleep(2)
+
     previous_messages.each do |message_attributes|
       new_message = @conversation.messages.create!(message_attributes.except('id'))
 

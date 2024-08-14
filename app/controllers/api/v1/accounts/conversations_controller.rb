@@ -42,47 +42,44 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
       @conversation = ConversationBuilder.new(params: params.except(:status), contact_inbox: @contact_inbox).perform
       # @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
       Messages::MessageBuilder.new(Current.user, @conversation, params[:message]).perform if params[:message].present?
-    end
 
-    return unless params[:populate_historical_messages] == 'true'
+      next unless params[:populate_historical_messages] == 'true'
 
-    # sleep for 2 seconds to make sure the conversation is created
-    sleep(2)
+      previous_messages.each do |message_attributes|
+        new_message = @conversation.messages.create!(message_attributes.except('id'))
 
-    previous_messages.each do |message_attributes|
-      new_message = @conversation.messages.create!(message_attributes.except('id'))
+        # duplicate the attachments if present
+        previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
 
-      # duplicate the attachments if present
-      previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
+        previous_message_attachments.each do |attachment|
+          # getting the active storage attachment
+          attachment_active_storage = ActiveStorage::Attachment.where(record_id: attachment.id)
 
-      previous_message_attachments.each do |attachment|
-        # getting the active storage attachment
-        attachment_active_storage = ActiveStorage::Attachment.where(record_id: attachment.id)
+          if attachment_active_storage.exists?
+            attachment_active_storage.each do |active_storage_attachment|
+              # finding the blob for that active storage attachment
+              original_blob = ActiveStorage::Blob.find_by(id: active_storage_attachment.blob_id)
 
-        if attachment_active_storage.exists?
-          attachment_active_storage.each do |active_storage_attachment|
-            # finding the blob for that active storage attachment
-            original_blob = ActiveStorage::Blob.find_by(id: active_storage_attachment.blob_id)
+              next unless original_blob
 
-            next unless original_blob
+              new_attachment = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
 
-            new_attachment = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
-
-            ActiveStorage::Attachment.create!(
-              name: active_storage_attachment.name,
-              record_type: active_storage_attachment.record_type,
-              record_id: new_attachment.id,
-              blob_id: original_blob.id,
-              created_at: Time.zone.now
-            )
+              ActiveStorage::Attachment.create!(
+                name: active_storage_attachment.name,
+                record_type: active_storage_attachment.record_type,
+                record_id: new_attachment.id,
+                blob_id: original_blob.id,
+                created_at: Time.zone.now
+              )
+            end
+          else
+            new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
           end
-        else
-          new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
         end
       end
-    end
 
-    Conversation.update(@conversation.id, status: params[:status]) if params[:status].present? && params[:status] != 'open'
+      Conversation.update(@conversation.id, status: params[:status]) if params[:status].present? && params[:status] != 'open'
+    end
 
     @conversation
   end

@@ -45,6 +45,10 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
     message[:mid]
   end
 
+  def message_timestamp
+    message[:timestamp]
+  end
+
   def message_source_id
     @outgoing_echo ? recipient_id : sender_id
   end
@@ -330,7 +334,8 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
       content: message_content,
       sender: @outgoing_echo ? nil : contact,
       content_attributes: {
-        in_reply_to_external_id: message_reply_attributes
+        in_reply_to_external_id: message_reply_attributes,
+        external_created_at: message_timestamp
       }
     }
 

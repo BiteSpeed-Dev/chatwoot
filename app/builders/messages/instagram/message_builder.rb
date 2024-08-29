@@ -262,8 +262,13 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
   def private_message_params(content, new_conversation)
-    { account_id: new_conversation.account_id, additional_attributes: { disable_notifications: true }, inbox_id: new_conversation.inbox_id,
-      message_type: :outgoing, content: content, private: true, created_at: message_timestamp - 1.second }
+    { account_id: new_conversation.account_id,
+      additional_attributes: { disable_notifications: true },
+      inbox_id: new_conversation.inbox_id,
+      message_type: :outgoing,
+      content: content,
+      private: true,
+      content_attributes: { external_created_at: message_timestamp - 1 } }
   end
 
   def fetch_previous_messages

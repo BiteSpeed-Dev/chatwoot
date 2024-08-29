@@ -263,7 +263,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
 
   def private_message_params(content, new_conversation)
     { account_id: new_conversation.account_id, additional_attributes: { disable_notifications: true }, inbox_id: new_conversation.inbox_id,
-      message_type: :outgoing, content: content, private: true }
+      message_type: :outgoing, content: content, private: true, created_at: message_timestamp - 1.second }
   end
 
   def fetch_previous_messages

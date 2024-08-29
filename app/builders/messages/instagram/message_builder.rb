@@ -46,7 +46,7 @@ class Messages::Instagram::MessageBuilder < Messages::Messenger::MessageBuilder
   end
 
   def message_timestamp
-    @messaging[:timestamp]
+    @messaging[:timestamp] / 1000
   end
 
   def message_source_id

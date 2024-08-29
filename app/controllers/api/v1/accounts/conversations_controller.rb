@@ -173,9 +173,10 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
     return [] if previous_conversation.blank?
 
-    previous_conversation.messages.order(created_at: :asc).map do |message|
-      next if message.private && message.content.include?('Conversation with')
-
+    previous_conversation.messages
+                         .order(created_at: :asc)
+                         .reject { |msg| msg.private && msg.content.include?('Conversation with') }
+                         .map do |message|
       message.attributes.except('conversation_id').merge(
         additional_attributes: (message.additional_attributes || {}).merge(ignore_automation_rules: true, disable_notifications: true)
       )

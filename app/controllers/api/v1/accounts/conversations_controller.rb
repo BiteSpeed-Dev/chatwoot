@@ -30,44 +30,19 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def show; end
 
-  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def create
     Rails.logger.info('Starting conversation creation process')
     previous_messages = fetch_previous_messages if params[:populate_historical_messages] == 'true'
 
     ActiveRecord::Base.transaction do
-      @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
-      Rails.logger.info("Created new conversation: #{@conversation.id}")
-
-      if params[:message].present?
-        Messages::MessageBuilder.new(Current.user, @conversation, params[:message]).perform
-        Rails.logger.info("Added initial message to conversation: #{@conversation.id}")
-      end
-
-      if params[:populate_historical_messages] == 'true'
-        Rails.logger.info("Populating historical messages for conversation: #{@conversation.id}")
-        previous_messages.each do |message_data|
-          new_message = @conversation.messages.create!(message_data[:message_attributes])
-          Rails.logger.info("Created historical message: #{new_message.id}")
-
-          message_data[:attachments].each do |attachment_data|
-            new_attachment = new_message.attachments.create!(attachment_data[:attributes])
-            Rails.logger.info("Created attachment for historical message: #{new_attachment.id}")
-
-            if attachment_data[:active_storage_data]
-              ActiveStorage::Attachment.create!(attachment_data[:active_storage_data].merge(record_id: new_attachment.id))
-              Rails.logger.info("Created ActiveStorage attachment for historical message attachment: #{new_attachment.id}")
-            end
-          end
-        end
-      end
+      create_conversation_and_initial_message
+      populate_historical_messages(previous_messages) if params[:populate_historical_messages] == 'true'
     end
 
     Rails.logger.info("Completed conversation creation process: #{@conversation.id}")
     @conversation
   end
 
-  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
   def update
     @conversation.update!(permitted_update_params)
   end
@@ -150,14 +125,39 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   private
 
-  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+  def create_conversation_and_initial_message
+    @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
+    Rails.logger.info("Created new conversation: #{@conversation.id}")
+
+    return if params[:message].blank?
+
+    Messages::MessageBuilder.new(Current.user, @conversation, params[:message]).perform
+    Rails.logger.info("Added initial message to conversation: #{@conversation.id}")
+  end
+
+  # rubocop:disable Metrics/AbcSize
+  def populate_historical_messages(previous_messages)
+    Rails.logger.info("Populating historical messages for conversation: #{@conversation.id}")
+    previous_messages.each do |message_data|
+      new_message = @conversation.messages.create!(message_data[:message_attributes])
+      Rails.logger.info("Created historical message: #{new_message.id}")
+
+      message_data[:attachments].each do |attachment_data|
+        new_attachment = new_message.attachments.create!(attachment_data[:attributes])
+        Rails.logger.info("Created attachment for historical message: #{new_attachment.id}")
+
+        if attachment_data[:active_storage_data]
+          ActiveStorage::Attachment.create!(attachment_data[:active_storage_data].merge(record_id: new_attachment.id))
+          Rails.logger.info("Created ActiveStorage attachment for historical message attachment: #{new_attachment.id}")
+        end
+      end
+    end
+  end
+  # rubocop:enable Metrics/AbcSize
+
   def fetch_previous_messages
     Rails.logger.info('Fetching previous messages')
-    previous_conversation = Conversation.where(
-      account_id: Current.account.id,
-      inbox_id: params[:inbox_id],
-      contact_id: params[:contact_id]
-    ).order(created_at: :desc).first
+    previous_conversation = find_previous_conversation
 
     if previous_conversation.blank?
       Rails.logger.info('No previous conversation found')
@@ -166,19 +166,41 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
     Rails.logger.info("Found previous conversation: #{previous_conversation.id}")
 
-    messages = previous_conversation.messages
-                                    .order(created_at: :asc)
-                                    .reject { |msg| msg.private && msg.content.include?('Conversation with') }
-
+    messages = fetch_messages(previous_conversation)
     Rails.logger.info("Processing #{messages.count} messages from previous conversation")
 
+    attachments = fetch_attachments_for_messages(messages)
+
+    build_message_data_with_attachments(messages, attachments)
+  end
+
+  def find_previous_conversation
+    Conversation.where(
+      account_id: Current.account.id,
+      inbox_id: params[:inbox_id],
+      contact_id: params[:contact_id]
+    ).order(created_at: :desc).first
+  end
+
+  def fetch_messages(conversation)
+    conversation.messages
+                .order(created_at: :asc)
+                .reject { |msg| msg.private && msg.content.include?('Conversation with') }
+  end
+
+  def fetch_attachments_for_messages(messages)
+    message_ids = messages.map(&:id)
+    Attachment.includes(:blob).where(message_id: message_ids).group_by(&:message_id)
+  end
+
+  def build_message_data_with_attachments(messages, attachments)
     messages.map do |message|
       message_data = build_message_data(message)
-      fetch_attachments(message, message_data)
+      message_attachments = attachments[message.id] || []
+      add_attachments_to_message_data(message_data, message_attachments)
       message_data
     end
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
   def build_message_data(message)
     Rails.logger.info("Building message data for message: #{message.id}")
@@ -193,34 +215,28 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     }
   end
 
-  def fetch_attachments(message, message_data)
-    Rails.logger.info("Fetching attachments for message: #{message.id}")
-    Attachment.where(message_id: message.id).find_each do |attachment|
-      attachment_data = { attributes: attachment.attributes.except('id', 'message_id') }
-      add_active_storage_data(attachment, attachment_data)
+  def add_attachments_to_message_data(message_data, attachments)
+    attachments.each do |attachment|
+      attachment_data = build_attachment_data(attachment)
       message_data[:attachments] << attachment_data
       Rails.logger.info("Processed attachment: #{attachment.id}")
     end
   end
 
+  def build_attachment_data(attachment)
+    attachment_data = { attributes: attachment.attributes.except('id', 'message_id') }
+    add_active_storage_data(attachment, attachment_data)
+    attachment_data
+  end
+
   def add_active_storage_data(attachment, attachment_data)
     Rails.logger.info("Adding ActiveStorage data for attachment: #{attachment.id}")
-    active_storage_attachment = ActiveStorage::Attachment.find_by(record_id: attachment.id)
-    unless active_storage_attachment
-      Rails.logger.info("No ActiveStorage attachment found for attachment: #{attachment.id}")
-      return
-    end
-
-    original_blob = ActiveStorage::Blob.find_by(id: active_storage_attachment.blob_id)
-    unless original_blob
-      Rails.logger.info("No ActiveStorage blob found for attachment: #{attachment.id}")
-      return
-    end
+    return unless attachment.blob
 
     attachment_data[:active_storage_data] = {
-      name: active_storage_attachment.name,
-      record_type: active_storage_attachment.record_type,
-      blob_id: original_blob.id,
+      name: attachment.blob.filename,
+      record_type: 'Attachment',
+      blob_id: attachment.blob.id,
       created_at: Time.zone.now
     }
     Rails.logger.info("Added ActiveStorage data for attachment: #{attachment.id}")

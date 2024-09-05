@@ -31,9 +31,6 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   def show; end
 
   # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Metrics/MethodLength
-  # rubocop:disable Metrics/CyclomaticComplexity
-  # rubocop:disable Metrics/PerceivedComplexity
   def create
     previous_messages = fetch_previous_messages if params[:populate_historical_messages] == 'true'
 
@@ -43,35 +40,14 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
       next unless params[:populate_historical_messages] == 'true'
 
-      previous_messages.each do |message_attributes|
-        new_message = @conversation.messages.create!(message_attributes.except('id'))
+      previous_messages.each do |message_data|
+        new_message = @conversation.messages.create!(message_data[:message_attributes])
 
-        # duplicate the attachments if present
-        previous_message_attachments = Attachment.where(message_id: message_attributes['id'])
+        message_data[:attachments].each do |attachment_data|
+          new_attachment = new_message.attachments.create!(attachment_data[:attributes])
 
-        previous_message_attachments.each do |attachment|
-          # getting the active storage attachment
-          attachment_active_storage = ActiveStorage::Attachment.where(record_id: attachment.id)
-
-          if attachment_active_storage.exists?
-            attachment_active_storage.each do |active_storage_attachment|
-              # finding the blob for that active storage attachment
-              original_blob = ActiveStorage::Blob.find_by(id: active_storage_attachment.blob_id)
-
-              next unless original_blob
-
-              new_attachment = new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
-
-              ActiveStorage::Attachment.create!(
-                name: active_storage_attachment.name,
-                record_type: active_storage_attachment.record_type,
-                record_id: new_attachment.id,
-                blob_id: original_blob.id,
-                created_at: Time.zone.now
-              )
-            end
-          else
-            new_message.attachments.create!(attachment.attributes.except('id', 'message_id'))
+          if attachment_data[:active_storage_data]
+            ActiveStorage::Attachment.create!(attachment_data[:active_storage_data].merge(record_id: new_attachment.id))
           end
         end
       end
@@ -81,9 +57,6 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   end
 
   # rubocop:enable Metrics/AbcSize
-  # rubocop:enable Metrics/MethodLength
-  # rubocop:enable Metrics/CyclomaticComplexity
-  # rubocop:enable Metrics/PerceivedComplexity
   def update
     @conversation.update!(permitted_update_params)
   end
@@ -167,9 +140,11 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   private
 
   def fetch_previous_messages
-    previous_conversation = Conversation.where({ account_id: Current.account.id,
-                                                 inbox_id: params[:inbox_id],
-                                                 contact_id: params[:contact_id] }).order(created_at: :desc).first
+    previous_conversation = Conversation.where(
+      account_id: Current.account.id,
+      inbox_id: params[:inbox_id],
+      contact_id: params[:contact_id]
+    ).order(created_at: :desc).first
 
     return [] if previous_conversation.blank?
 
@@ -177,10 +152,45 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
                          .order(created_at: :asc)
                          .reject { |msg| msg.private && msg.content.include?('Conversation with') }
                          .map do |message|
-      message.attributes.except('conversation_id').merge(
-        additional_attributes: (message.additional_attributes || {}).merge(ignore_automation_rules: true, disable_notifications: true)
-      )
+      message_data = build_message_data(message)
+      fetch_attachments(message, message_data)
+      message_data
     end
+  end
+
+  def build_message_data(message)
+    {
+      message_attributes: message.attributes.except('id', 'conversation_id').merge(
+        additional_attributes: (message.additional_attributes || {}).merge(
+          ignore_automation_rules: true,
+          disable_notifications: true
+        )
+      ),
+      attachments: []
+    }
+  end
+
+  def fetch_attachments(message, message_data)
+    Attachment.where(message_id: message.id).find_each do |attachment|
+      attachment_data = { attributes: attachment.attributes.except('id', 'message_id') }
+      add_active_storage_data(attachment, attachment_data)
+      message_data[:attachments] << attachment_data
+    end
+  end
+
+  def add_active_storage_data(attachment, attachment_data)
+    active_storage_attachment = ActiveStorage::Attachment.find_by(record_id: attachment.id)
+    return unless active_storage_attachment
+
+    original_blob = ActiveStorage::Blob.find_by(id: active_storage_attachment.blob_id)
+    return unless original_blob
+
+    attachment_data[:active_storage_data] = {
+      name: active_storage_attachment.name,
+      record_type: active_storage_attachment.record_type,
+      blob_id: original_blob.id,
+      created_at: Time.zone.now
+    }
   end
 
   def permitted_update_params

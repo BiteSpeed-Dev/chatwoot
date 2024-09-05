@@ -190,7 +190,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def fetch_attachments_for_messages(messages)
     message_ids = messages.map(&:id)
-    Attachment.includes(:blob).where(message_id: message_ids).group_by(&:message_id)
+    Attachment.where(message_id: message_ids).group_by(&:message_id)
   end
 
   def build_message_data_with_attachments(messages, attachments)
@@ -231,12 +231,12 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def add_active_storage_data(attachment, attachment_data)
     Rails.logger.info("Adding ActiveStorage data for attachment: #{attachment.id}")
-    return unless attachment.blob
+    return unless attachment.file.attached?
 
     attachment_data[:active_storage_data] = {
-      name: attachment.blob.filename,
+      name: attachment.file.filename,
       record_type: 'Attachment',
-      blob_id: attachment.blob.id,
+      blob_id: attachment.file.blob.id,
       created_at: Time.zone.now
     }
     Rails.logger.info("Added ActiveStorage data for attachment: #{attachment.id}")

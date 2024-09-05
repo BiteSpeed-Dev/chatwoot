@@ -30,33 +30,44 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def show; end
 
-  # rubocop:disable Metrics/AbcSize
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def create
+    Rails.logger.info('Starting conversation creation process')
     previous_messages = fetch_previous_messages if params[:populate_historical_messages] == 'true'
 
     ActiveRecord::Base.transaction do
       @conversation = ConversationBuilder.new(params: params, contact_inbox: @contact_inbox).perform
-      Messages::MessageBuilder.new(Current.user, @conversation, params[:message]).perform if params[:message].present?
+      Rails.logger.info("Created new conversation: #{@conversation.id}")
 
-      next unless params[:populate_historical_messages] == 'true'
+      if params[:message].present?
+        Messages::MessageBuilder.new(Current.user, @conversation, params[:message]).perform
+        Rails.logger.info("Added initial message to conversation: #{@conversation.id}")
+      end
 
-      previous_messages.each do |message_data|
-        new_message = @conversation.messages.create!(message_data[:message_attributes])
+      if params[:populate_historical_messages] == 'true'
+        Rails.logger.info("Populating historical messages for conversation: #{@conversation.id}")
+        previous_messages.each do |message_data|
+          new_message = @conversation.messages.create!(message_data[:message_attributes])
+          Rails.logger.info("Created historical message: #{new_message.id}")
 
-        message_data[:attachments].each do |attachment_data|
-          new_attachment = new_message.attachments.create!(attachment_data[:attributes])
+          message_data[:attachments].each do |attachment_data|
+            new_attachment = new_message.attachments.create!(attachment_data[:attributes])
+            Rails.logger.info("Created attachment for historical message: #{new_attachment.id}")
 
-          if attachment_data[:active_storage_data]
-            ActiveStorage::Attachment.create!(attachment_data[:active_storage_data].merge(record_id: new_attachment.id))
+            if attachment_data[:active_storage_data]
+              ActiveStorage::Attachment.create!(attachment_data[:active_storage_data].merge(record_id: new_attachment.id))
+              Rails.logger.info("Created ActiveStorage attachment for historical message attachment: #{new_attachment.id}")
+            end
           end
         end
       end
     end
 
+    Rails.logger.info("Completed conversation creation process: #{@conversation.id}")
     @conversation
   end
 
-  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
   def update
     @conversation.update!(permitted_update_params)
   end
@@ -139,26 +150,38 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   private
 
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
   def fetch_previous_messages
+    Rails.logger.info('Fetching previous messages')
     previous_conversation = Conversation.where(
       account_id: Current.account.id,
       inbox_id: params[:inbox_id],
       contact_id: params[:contact_id]
     ).order(created_at: :desc).first
 
-    return [] if previous_conversation.blank?
+    if previous_conversation.blank?
+      Rails.logger.info('No previous conversation found')
+      return []
+    end
 
-    previous_conversation.messages
-                         .order(created_at: :asc)
-                         .reject { |msg| msg.private && msg.content.include?('Conversation with') }
-                         .map do |message|
+    Rails.logger.info("Found previous conversation: #{previous_conversation.id}")
+
+    messages = previous_conversation.messages
+                                    .order(created_at: :asc)
+                                    .reject { |msg| msg.private && msg.content.include?('Conversation with') }
+
+    Rails.logger.info("Processing #{messages.count} messages from previous conversation")
+
+    messages.map do |message|
       message_data = build_message_data(message)
       fetch_attachments(message, message_data)
       message_data
     end
   end
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
   def build_message_data(message)
+    Rails.logger.info("Building message data for message: #{message.id}")
     {
       message_attributes: message.attributes.except('id', 'conversation_id').merge(
         additional_attributes: (message.additional_attributes || {}).merge(
@@ -171,19 +194,28 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   end
 
   def fetch_attachments(message, message_data)
+    Rails.logger.info("Fetching attachments for message: #{message.id}")
     Attachment.where(message_id: message.id).find_each do |attachment|
       attachment_data = { attributes: attachment.attributes.except('id', 'message_id') }
       add_active_storage_data(attachment, attachment_data)
       message_data[:attachments] << attachment_data
+      Rails.logger.info("Processed attachment: #{attachment.id}")
     end
   end
 
   def add_active_storage_data(attachment, attachment_data)
+    Rails.logger.info("Adding ActiveStorage data for attachment: #{attachment.id}")
     active_storage_attachment = ActiveStorage::Attachment.find_by(record_id: attachment.id)
-    return unless active_storage_attachment
+    unless active_storage_attachment
+      Rails.logger.info("No ActiveStorage attachment found for attachment: #{attachment.id}")
+      return
+    end
 
     original_blob = ActiveStorage::Blob.find_by(id: active_storage_attachment.blob_id)
-    return unless original_blob
+    unless original_blob
+      Rails.logger.info("No ActiveStorage blob found for attachment: #{attachment.id}")
+      return
+    end
 
     attachment_data[:active_storage_data] = {
       name: active_storage_attachment.name,
@@ -191,6 +223,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
       blob_id: original_blob.id,
       created_at: Time.zone.now
     }
+    Rails.logger.info("Added ActiveStorage data for attachment: #{attachment.id}")
   end
 
   def permitted_update_params

@@ -32,15 +32,17 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   def create
     Rails.logger.info('Starting conversation creation process')
-    previous_messages = fetch_previous_messages if params[:populate_historical_messages] == 'true'
+    # previous_messages = fetch_previous_messages if params[:populate_historical_messages] == 'true'
 
-    ActiveRecord::Base.transaction do
-      create_conversation_and_initial_message
-      populate_historical_messages(previous_messages) if params[:populate_historical_messages] == 'true'
-    end
+    # ActiveRecord::Base.transaction do
+    #   create_conversation_and_initial_message
+    #   populate_historical_messages(previous_messages) if params[:populate_historical_messages] == 'true'
+    # end
 
     Rails.logger.info("Completed conversation creation process: #{@conversation.id}")
-    @conversation
+    # @conversation
+
+    # return success
   end
 
   def update

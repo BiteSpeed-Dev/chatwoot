@@ -40,8 +40,8 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     # end
 
     Rails.logger.info('Completed conversation creation process:')
-    # @conversation
     @conversation = find_previous_conversation
+    @conversation
 
     # return success
   end

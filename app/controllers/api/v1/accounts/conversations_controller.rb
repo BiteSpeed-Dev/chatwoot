@@ -39,7 +39,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     #   populate_historical_messages(previous_messages) if params[:populate_historical_messages] == 'true'
     # end
 
-    Rails.logger.info("Completed conversation creation process: #{@conversation.id}")
+    Rails.logger.info('Completed conversation creation process:')
     # @conversation
 
     # return success

@@ -134,7 +134,7 @@ class Messages::MessageBuilder
   def check_parent_wa_report_id
     return if @parent_wa_report_id.blank?
 
-    @in_reply_to = Message.find_by(additional_attributes: { wa_report_id: @parent_wa_report_id })&.id
+    @in_reply_to = Message.find_by(conversation_id: @conversation.id, additional_attributes: { wa_report_id: @parent_wa_report_id })&.id
   end
 
   def sender

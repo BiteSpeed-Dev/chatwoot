@@ -1,23 +1,21 @@
-class ConversationImport
+class ConversationImport < ApplicationJob
   queue_as :critical
 
-  pattr_initialize [:conversation_id!, :previous_conversation_id!]
-
-  def perform
+  def perform(conversation_id, previous_conversation_id)
     ActiveRecord::Base.transaction do
-      populate_historical_messages
+      populate_historical_messages(conversation_id, previous_conversation_id)
     end
   end
 
   private
 
   # rubocop:disable Metrics/AbcSize
-  def populate_historical_messages
+  def populate_historical_messages(conversation_id, previous_conversation_id)
     conversation = Conversation.find(conversation_id)
 
     Rails.logger.info("Populating historical messages for conversation: #{conversation.id}")
 
-    previous_messages = fetch_previous_messages
+    previous_messages = fetch_previous_messages(previous_conversation_id)
 
     previous_messages.each do |message_data|
       new_message = conversation.messages.create!(message_data[:message_attributes])
@@ -36,7 +34,7 @@ class ConversationImport
   end
 
   # rubocop:enable Metrics/AbcSize
-  def fetch_previous_messages
+  def fetch_previous_messages(previous_conversation_id)
     Rails.logger.info('Fetching previous messages')
     previous_conversation = Conversation.find(previous_conversation_id)
 

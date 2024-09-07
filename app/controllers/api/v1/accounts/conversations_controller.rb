@@ -38,8 +38,8 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     end
 
     if previous_conversation.present? && @conversation.present? && params[:populate_historical_messages] == 'true'
-      ConversationImport.new(@conversation.id,
-                             previous_conversation.id).perform_later
+      ConversationImport.perform_later(@conversation.id,
+                                       previous_conversation.id)
     end
 
     Rails.logger.info('Completed conversation creation process:')

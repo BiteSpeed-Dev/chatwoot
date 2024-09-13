@@ -177,13 +177,15 @@ const actions = {
   },
 
   async setActiveChat({ commit, dispatch }, { data, after }) {
+    // eslint-disable-next-line no-console
+    console.log('setActiveChat', data, after);
     commit(types.SET_CURRENT_CHAT_WINDOW, data);
     commit(types.CLEAR_ALL_MESSAGES_LOADED);
     if (data.dataFetched === undefined) {
       try {
         await dispatch('fetchPreviousMessages', {
           after,
-          before_timestamp: data.messages[0].created_at,
+          before: data.messages[0].id,
           conversationId: data.id,
         });
         Vue.set(data, 'dataFetched', true);

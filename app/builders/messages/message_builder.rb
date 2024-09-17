@@ -135,6 +135,7 @@ class Messages::MessageBuilder
     return if @parent_wa_report_id.blank?
 
     @in_reply_to = Message.find_by(conversation_id: @conversation.id, additional_attributes: { wa_report_id: @parent_wa_report_id })&.id
+    @in_reply_to_external_id = @parent_wa_report_id if @in_reply_to.present?
   end
 
   def sender
@@ -187,6 +188,7 @@ class Messages::MessageBuilder
       content_type: @params[:content_type],
       items: @items,
       in_reply_to: @in_reply_to,
+      in_reply_to_external_id: @in_reply_to_external_id,
       echo_id: @params[:echo_id],
       source_id: @params[:source_id]
     }.merge(external_created_at).merge(automation_rule_id).merge(campaign_id).merge(template_params).merge(ignore_automation_rules).merge(disable_notifications).merge(wa_report_id)

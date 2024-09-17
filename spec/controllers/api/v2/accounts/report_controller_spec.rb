@@ -300,6 +300,78 @@ RSpec.describe 'Reports API', type: :request do
         expect(json_response['conversations_count']).to eq(1)
       end
     end
+
+    context 'when an agent has access to multiple inboxes' do
+      let!(:inbox2) { create(:inbox, account: account) }
+      let(:inbox_member2) { create(:inbox_member, user: user, inbox: inbox2) }
+      let(:params) do
+        super().merge(
+          type: :agent,
+          since: 7.days.ago.to_i.to_s,
+          until: end_of_today.to_s,
+          metric: 'conversations_count'
+        )
+      end
+
+      it 'returns agent conversation metrics from the current inbox passed as param' do
+        create(:conversation, account: account, inbox: inbox, assignee: admin, created_at: Time.zone.today)
+
+        get "/api/v2/accounts/#{account.id}/reports",
+            params: params.merge({ type: 'agent', id: admin.id, secondary_filter_id: inbox2.id }),
+            headers: admin.create_new_auth_token
+
+        expect(response).to have_http_status(:success)
+
+        json_response = response.parsed_body
+        current_day_metric = json_response.select { |x| x['timestamp'] == start_of_today }
+        expect(current_day_metric.length).to eq(1)
+        expect(current_day_metric[0]['value']).to eq(0)
+
+        get "/api/v2/accounts/#{account.id}/reports/summary",
+            params: params.merge({ type: 'agent', id: admin.id, secondary_filter_id: inbox2.id }),
+            headers: admin.create_new_auth_token
+
+        expect(response.parsed_body['conversations_count']).to eq(0)
+
+        get "/api/v2/accounts/#{account.id}/reports",
+            params: params.merge({ type: 'agent', id: admin.id, secondary_filter_id: inbox.id }),
+            headers: admin.create_new_auth_token
+
+        current_day_metric = response.parsed_body.select { |x| x['timestamp'] == start_of_today }
+        expect(current_day_metric.length).to eq(1)
+        expect(current_day_metric[0]['value']).to eq(1)
+
+        get "/api/v2/accounts/#{account.id}/reports/summary",
+            params: params.merge({ type: 'agent', id: admin.id, secondary_filter_id: inbox.id }),
+            headers: admin.create_new_auth_token
+
+        expect(response.parsed_body['conversations_count']).to eq(1)
+      end
+
+      it 'returns agent conversation metrics for all inboxes when no inbox is passed' do
+        create(:conversation, account: account, inbox: inbox,
+                              assignee: admin, created_at: Time.zone.today)
+        create(:conversation, account: account, inbox: inbox2,
+                              assignee: admin, created_at: Time.zone.today)
+
+        get "/api/v2/accounts/#{account.id}/reports",
+            params: params.merge({ type: 'agent', id: admin.id }),
+            headers: admin.create_new_auth_token
+
+        expect(response).to have_http_status(:success)
+
+        json_response = response.parsed_body
+        current_day_metric = json_response.select { |x| x['timestamp'] == start_of_today }
+        expect(current_day_metric.length).to eq(1)
+        expect(current_day_metric[0]['value']).to eq(2)
+
+        get "/api/v2/accounts/#{account.id}/reports/summary",
+            params: params.merge({ type: 'agent', id: admin.id }),
+            headers: admin.create_new_auth_token
+
+        expect(response.parsed_body['conversations_count']).to eq(2)
+      end
+    end
   end
 
   describe 'GET /api/v2/accounts/:account_id/reports/inboxes' do

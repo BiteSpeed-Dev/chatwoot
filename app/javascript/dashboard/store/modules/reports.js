@@ -127,6 +127,7 @@ export const actions = {
       reportObj.to,
       reportObj.type,
       reportObj.id,
+      reportObj.secondaryFilterId,
       reportObj.groupBy,
       reportObj.businessHours
     )

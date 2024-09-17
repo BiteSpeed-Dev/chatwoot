@@ -1,9 +1,11 @@
 import * as MutationHelpers from 'shared/helpers/vuex/mutationHelpers';
 import * as types from '../mutation-types';
 import AgentAPI from '../../api/agents';
+import InboxesAPI from '../../api/inboxes';
 
 export const state = {
   records: [],
+  secondaryRecords: [],
   uiFlags: {
     isFetching: false,
     isCreating: false,
@@ -15,6 +17,9 @@ export const state = {
 export const getters = {
   getAgents($state) {
     return $state.records;
+  },
+  getInboxes($state) {
+    return $state.secondaryRecords;
   },
   getVerifiedAgents($state) {
     return $state.records.filter(record => record.confirmed);
@@ -40,13 +45,20 @@ export const getters = {
 export const actions = {
   get: async ({ commit }) => {
     commit(types.default.SET_AGENT_FETCHING_STATUS, true);
-    try {
-      const response = await AgentAPI.get();
-      commit(types.default.SET_AGENT_FETCHING_STATUS, false);
-      commit(types.default.SET_AGENTS, response.data);
-    } catch (error) {
-      commit(types.default.SET_AGENT_FETCHING_STATUS, false);
-    }
+    Promise.all([AgentAPI.get(), InboxesAPI.get()])
+      .then(([agentResponse, inboxResponse]) => {
+        // Both promises have been resolved
+        commit(types.default.SET_AGENT_FETCHING_STATUS, false);
+        commit(types.default.SET_AGENTS, agentResponse.data);
+        commit(
+          types.default.SET_INBOXES_FOR_AGENTS,
+          inboxResponse.data.payload
+        );
+      })
+      .catch(() => {
+        // If any of the promises were rejected
+        commit(types.default.SET_AGENT_FETCHING_STATUS, false);
+      });
   },
   create: async ({ commit }, agentInfo) => {
     commit(types.default.SET_AGENT_CREATING_STATUS, true);
@@ -107,6 +119,7 @@ export const mutations = {
   },
 
   [types.default.SET_AGENTS]: MutationHelpers.set,
+  [types.default.SET_INBOXES_FOR_AGENTS]: MutationHelpers.setSecondary,
   [types.default.ADD_AGENT]: MutationHelpers.create,
   [types.default.EDIT_AGENT]: MutationHelpers.update,
   [types.default.DELETE_AGENT]: MutationHelpers.destroy,

@@ -12,7 +12,7 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def update
-    permitted_params = params.require(:message).permit(:content, :content_attributes, :source_id)
+    permitted_params = params.require(:message).permit(:content, :source_id, content_attributes: {})
     ActiveRecord::Base.transaction do
       message.update!(permitted_params)
     end

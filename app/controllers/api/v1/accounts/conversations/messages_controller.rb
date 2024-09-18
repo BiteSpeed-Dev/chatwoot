@@ -24,13 +24,33 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def destroy
+    ActiveRecord::Base.transaction do
+      message.update!(content: I18n.t('conversations.messages.deleted'), content_attributes: { deleted: true })
+      message.attachments.destroy_all
+    end
+  end
+
+  def update_with_source_id
+    @message = message_via_source_id
+    permitted_params = params.require(:message).permit(:content, content_attributes: {})
+    ActiveRecord::Base.transaction do
+      if permitted_params[:content_attributes].present?
+        new_content_attributes = message.content_attributes.merge(permitted_params[:content_attributes])
+        message.update!(permitted_params.merge(content_attributes: new_content_attributes))
+      else
+        message.update!(permitted_params)
+      end
+    end
+  end
+
+  def destroy_with_source_id
     @message = message_via_source_id
     if @message
       ActiveRecord::Base.transaction do
         @message.attachments.destroy_all
         @message.destroy!
       end
-      render json: { message: 'Message deleted successfully' }, status: :ok
+      render json: { message: 'Message deleted' }, status: :ok
     else
       render json: { error: 'Message not found' }, status: :not_found
     end

@@ -90,11 +90,8 @@ class Messages::MessageBuilder
   def duplicate_message
     return false if @params[:source_id].blank?
 
-    existing_message = Message.find_by(conversation_id: @conversation.id, source_id: @params[:source_id])
-    @message = existing_message
-    return true if existing_message.present?
-
-    false
+    @message = Message.find_by(conversation_id: @conversation.id, source_id: @params[:source_id])
+    @message.present?
   end
 
   def process_url_attachments

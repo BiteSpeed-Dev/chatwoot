@@ -135,7 +135,7 @@ class Messages::MessageBuilder
     return if @parent_source_id.blank?
 
     @in_reply_to = Message.find_by(conversation_id: @conversation.id, source_id: @parent_source_id)&.id
-    @in_reply_to_external_id = @parent_source_id if @in_reply_to.present?
+    # @in_reply_to_external_id = @parent_source_id if @in_reply_to.present?
   end
 
   def sender
@@ -184,7 +184,6 @@ class Messages::MessageBuilder
       content_type: @params[:content_type],
       items: @items,
       in_reply_to: @in_reply_to,
-      in_reply_to_external_id: @in_reply_to_external_id,
       echo_id: @params[:echo_id],
       source_id: @params[:source_id]
     }.merge(external_created_at).merge(automation_rule_id).merge(campaign_id).merge(template_params).merge(ignore_automation_rules).merge(disable_notifications)

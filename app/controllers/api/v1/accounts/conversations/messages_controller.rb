@@ -54,7 +54,7 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   private
 
   def message_via_source_id
-    @message_via_source_id ||= @conversation.messages.find_by(source_id: params[:source_id])
+    @message_via_source_id ||= @conversation.messages.find_by(source_id: permitted_params[:id])
   end
 
   def message

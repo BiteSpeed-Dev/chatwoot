@@ -1059,13 +1059,24 @@ export default {
     },
     setReplyToInPayload(payload) {
       if (this.inReplyTo?.id) {
-        return {
+        const updatedPayload = {
           ...payload,
           contentAttributes: {
             ...payload.contentAttributes,
             in_reply_to: this.inReplyTo.id,
           },
         };
+
+        // eslint-disable-next-line no-console
+        console.log('inReplyTo', { inReplyTo: this.inReplyTo });
+
+        // Add in_reply_to_external_id only if wa_report_id exists
+        if (this.inReplyTo.additional_attributes?.wa_report_id) {
+          updatedPayload.contentAttributes.in_reply_to_external_id =
+            this.inReplyTo.additional_attributes.wa_report_id;
+        }
+
+        return updatedPayload;
       }
 
       return payload;

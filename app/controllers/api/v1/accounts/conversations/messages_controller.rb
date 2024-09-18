@@ -11,10 +11,16 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
     render_could_not_create_error(e.message)
   end
 
+  def update
+    ActiveRecord::Base.transaction do
+      message.update!(content: params[:content], content_attributes: params[:content_attributes], source_id: params[:source_id])
+    end
+  end
+
   def destroy
     ActiveRecord::Base.transaction do
-      message.update!(content: I18n.t('conversations.messages.deleted'), content_attributes: { deleted: true })
-      message.attachments.destroy_all
+      message_via_source_id.update!(content: I18n.t('conversations.messages.deleted'), content_attributes: { deleted: true })
+      message_via_source_id.attachments.destroy_all
     end
   end
 
@@ -46,6 +52,10 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   private
+
+  def message_via_source_id
+    @message_via_source_id ||= @conversation.messages.find_by(source_id: params[:source_id])
+  end
 
   def message
     @message ||= @conversation.messages.find(permitted_params[:id])

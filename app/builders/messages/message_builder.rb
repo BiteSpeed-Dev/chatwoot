@@ -23,7 +23,7 @@ class Messages::MessageBuilder
   end
 
   def perform
-    return if duplicate_message
+    return @message if duplicate_message
 
     @message = @conversation.messages.build(message_params)
     process_attachments
@@ -91,6 +91,7 @@ class Messages::MessageBuilder
     return false if @params[:source_id].blank?
 
     existing_message = Message.find_by(conversation_id: @conversation.id, source_id: @params[:source_id])
+    @message = existing_message
     return true if existing_message.present?
 
     false

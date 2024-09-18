@@ -18,9 +18,14 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def destroy
-    ActiveRecord::Base.transaction do
-      message_via_source_id.update!(content: I18n.t('conversations.messages.deleted'), content_attributes: { deleted: true })
-      message_via_source_id.attachments.destroy_all
+    @message = message_via_source_id
+    if @message
+      ActiveRecord::Base.transaction do
+        @message.update!(content: I18n.t('conversations.messages.deleted'), content_attributes: { deleted: true })
+        @message.attachments.destroy_all
+      end
+    else
+      render json: { error: 'Message not found' }, status: :not_found
     end
   end
 

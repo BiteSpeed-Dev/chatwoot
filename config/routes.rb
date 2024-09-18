@@ -90,7 +90,7 @@ Rails.application.routes.draw do
                 member do
                   post :translate
                   post :retry
-                  post :update_with_source_id
+                  patch :update_with_source_id
                   delete :destroy_with_source_id
                 end
               end

@@ -1,33 +1,9 @@
-<template>
-  <div class="flex-1 overflow-auto p-4">
-    <woot-button
-      color-scheme="success"
-      class-names="button--fixed-top"
-      icon="arrow-download"
-      @click="downloadReports"
-    >
-      {{ downloadButtonLabel }}
-    </woot-button>
-    <report-filter-selector
-      :show-agents-filter="false"
-      :show-group-by-filter="false"
-      @filter-change="onFilterChange"
-    />
-    <ve-table
-      max-height="calc(100vh - 21.875rem)"
-      :fixed-header="true"
-      :columns="columns"
-      :table-data="tableData"
-    />
-  </div>
-</template>
-
 <script>
 import ReportFilterSelector from './FilterSelector.vue';
 import { formatTime } from '@chatwoot/utils';
 
 import reportMixin from '../../../../../mixins/reportMixin';
-import alertMixin from 'shared/mixins/alertMixin';
+import { useAlert } from 'dashboard/composables';
 
 import { generateFileName } from '../../../../../helper/downloadHelper';
 import { VeTable } from 'vue-easytable';
@@ -37,7 +13,7 @@ export default {
     VeTable,
     ReportFilterSelector,
   },
-  mixins: [reportMixin, alertMixin],
+  mixins: [reportMixin],
   props: {
     type: {
       type: String,
@@ -193,7 +169,7 @@ export default {
         const params = { from, to, fileName, businessHours };
         this.$store.dispatch(dispatchMethods[type], params);
         if (type === 'agent') {
-          this.showAlert(
+          useAlert(
             'The report will soon be available in all administrator email inboxes.'
           );
         }
@@ -208,3 +184,27 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div class="flex-1 overflow-auto p-4">
+    <woot-button
+      color-scheme="success"
+      class-names="button--fixed-top"
+      icon="arrow-download"
+      @click="downloadReports"
+    >
+      {{ downloadButtonLabel }}
+    </woot-button>
+    <ReportFilterSelector
+      :show-agents-filter="false"
+      :show-group-by-filter="false"
+      @filter-change="onFilterChange"
+    />
+    <VeTable
+      max-height="calc(100vh - 21.875rem)"
+      fixed-header
+      :columns="columns"
+      :table-data="tableData"
+    />
+  </div>
+</template>

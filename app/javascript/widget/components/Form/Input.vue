@@ -1,3 +1,74 @@
+<script>
+import { useDarkMode } from 'widget/composables/useDarkMode';
+export default {
+  props: {
+    label: {
+      type: String,
+      default: '',
+    },
+    type: {
+      type: String,
+      default: 'text',
+    },
+    placeholder: {
+      type: String,
+      default: '',
+    },
+    value: {
+      type: [String, Number],
+      required: true,
+    },
+    error: {
+      type: String,
+      default: '',
+    },
+    helpText: {
+      type: String,
+      default: '',
+    },
+  },
+  setup() {
+    const { getThemeClass } = useDarkMode();
+    return { getThemeClass };
+  },
+  computed: {
+    labelClass() {
+      return this.error
+        ? `text-red-400 ${this.getThemeClass(
+            'text-black-800',
+            'dark:text-slate-50'
+          )}`
+        : `text-black-800 ${this.getThemeClass(
+            'text-black-800',
+            'dark:text-slate-50'
+          )}`;
+    },
+    isInputDarkOrLightMode() {
+      return `${this.getThemeClass(
+        'bg-white',
+        'dark:bg-slate-600'
+      )} ${this.getThemeClass('text-slate-700', 'dark:text-slate-50')}`;
+    },
+    inputBorderColor() {
+      return `${this.getThemeClass(
+        'border-black-200',
+        'dark:border-black-500'
+      )}`;
+    },
+    inputHasError() {
+      return this.error
+        ? `border-red-200 hover:border-red-300 focus:border-red-300 ${this.isInputDarkOrLightMode}`
+        : `hover:border-black-300 focus:border-black-300 ${this.isInputDarkOrLightMode} ${this.inputBorderColor}`;
+    },
+  },
+  methods: {
+    onChange(event) {
+      this.$emit('input', event.target.value);
+    },
+  },
+};
+</script>
+
 <template>
   <label class="block">
     <div
@@ -26,61 +97,3 @@
     </div>
   </label>
 </template>
-<script>
-import darkModeMixin from 'widget/mixins/darkModeMixin';
-export default {
-  mixins: [darkModeMixin],
-  props: {
-    label: {
-      type: String,
-      default: '',
-    },
-    type: {
-      type: String,
-      default: 'text',
-    },
-    placeholder: {
-      type: String,
-      default: '',
-    },
-    value: {
-      type: [String, Number],
-      required: true,
-    },
-    error: {
-      type: String,
-      default: '',
-    },
-    helpText: {
-      type: String,
-      default: '',
-    },
-  },
-  computed: {
-    labelClass() {
-      return this.error
-        ? `text-red-400 ${this.$dm('text-black-800', 'dark:text-slate-50')}`
-        : `text-black-800 ${this.$dm('text-black-800', 'dark:text-slate-50')}`;
-    },
-    isInputDarkOrLightMode() {
-      return `${this.$dm('bg-white', 'dark:bg-slate-600')} ${this.$dm(
-        'text-slate-700',
-        'dark:text-slate-50'
-      )}`;
-    },
-    inputBorderColor() {
-      return `${this.$dm('border-black-200', 'dark:border-black-500')}`;
-    },
-    inputHasError() {
-      return this.error
-        ? `border-red-200 hover:border-red-300 focus:border-red-300 ${this.isInputDarkOrLightMode}`
-        : `hover:border-black-300 focus:border-black-300 ${this.isInputDarkOrLightMode} ${this.inputBorderColor}`;
-    },
-  },
-  methods: {
-    onChange(event) {
-      this.$emit('input', event.target.value);
-    },
-  },
-};
-</script>

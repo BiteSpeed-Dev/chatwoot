@@ -1,42 +1,18 @@
-<template>
-  <div class="agent-table-container">
-    <ve-table
-      max-height="calc(100vh - 21.875rem)"
-      :fixed-header="true"
-      :columns="columns"
-      :table-data="tableData"
-    />
-    <div v-if="isLoading" class="agents-loader">
-      <spinner />
-      <span>{{
-        $t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.LOADING_MESSAGE')
-      }}</span>
-    </div>
-    <div v-if="agents.length > 0" class="table-pagination">
-      <ve-pagination
-        :total="agents.length"
-        :page-index="pageIndex"
-        :page-size="25"
-        :page-size-option="[25]"
-      />
-    </div>
-  </div>
-</template>
-
 <script>
-import Thumbnail from 'dashboard/components/widgets/Thumbnail.vue';
+import { mapGetters } from 'vuex';
+import { VeTable, VePagination } from 'vue-easytable';
 import Spinner from 'shared/components/Spinner.vue';
-import rtlMixin from 'shared/mixins/rtlMixin';
-import { VePagination, VeTable } from 'vue-easytable';
+import EmptyState from 'dashboard/components/widgets/EmptyState.vue';
+import Thumbnail from 'dashboard/components/widgets/Thumbnail.vue';
 
 export default {
   name: 'AgentTable',
   components: {
+    EmptyState,
     Spinner,
     VeTable,
     VePagination,
   },
-  mixins: [rtlMixin],
   props: {
     agents: {
       type: Array,
@@ -56,18 +32,23 @@ export default {
     },
   },
   computed: {
+    ...mapGetters({
+      isRTL: 'accounts/isRTL',
+    }),
     tableData() {
-      return this.agents.map(agent => {
-        const agentMetrics = this.getAgentMetrics(agent.id);
-        return {
-          agent: agent.name,
-          email: agent.email,
-          thumbnail: agent.thumbnail,
-          open: agentMetrics.open || 0,
-          unattended: agentMetrics.unattended || 0,
-          status: agent.availability_status,
-        };
-      });
+      return this.agentMetrics
+        .filter(agentMetric => this.getAgentInformation(agentMetric.id))
+        .map(agent => {
+          const agentInformation = this.getAgentInformation(agent.id);
+          return {
+            agent: agentInformation.name || agentInformation.available_name,
+            email: agentInformation.email,
+            thumbnail: agentInformation.thumbnail,
+            open: agent.metric.open || 0,
+            unattended: agent.metric.unattended || 0,
+            status: agentInformation.availability_status,
+          };
+        });
     },
     columns() {
       return [
@@ -78,7 +59,7 @@ export default {
             'OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.AGENT'
           ),
           fixed: 'left',
-          align: this.isRTLView ? 'right' : 'left',
+          align: this.isRTL ? 'right' : 'left',
           width: 25,
           renderBodyCell: ({ row }) => (
             <div class="row-user-block">
@@ -89,7 +70,7 @@ export default {
                 status={row.status}
               />
               <div class="user-block">
-                <h6 class="title overflow-hidden whitespace-nowrap text-ellipsis">
+                <h6 class="overflow-hidden title whitespace-nowrap text-ellipsis">
                   {row.agent}
                 </h6>
                 <span class="sub-title">{row.email}</span>
@@ -103,7 +84,7 @@ export default {
           title: this.$t(
             'OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.OPEN'
           ),
-          align: this.isRTLView ? 'right' : 'left',
+          align: this.isRTL ? 'right' : 'left',
           width: 10,
         },
         {
@@ -112,22 +93,52 @@ export default {
           title: this.$t(
             'OVERVIEW_REPORTS.AGENT_CONVERSATIONS.TABLE_HEADER.UNATTENDED'
           ),
-          align: this.isRTLView ? 'right' : 'left',
+          align: this.isRTL ? 'right' : 'left',
           width: 10,
         },
       ];
     },
   },
   methods: {
-    getAgentMetrics(id) {
-      return (
-        this.agentMetrics.find(metrics => metrics.assignee_id === Number(id)) ||
-        {}
-      );
+    onPageNumberChange(pageIndex) {
+      this.$emit('pageChange', pageIndex);
+    },
+    getAgentInformation(id) {
+      return this.agents?.find(agent => agent.id === Number(id));
     },
   },
 };
 </script>
+
+<template>
+  <div class="agent-table-container">
+    <VeTable
+      max-height="calc(100vh - 21.875rem)"
+      fixed-header
+      :columns="columns"
+      :table-data="tableData"
+    />
+    <div v-if="isLoading" class="agents-loader">
+      <Spinner />
+      <span>{{
+        $t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.LOADING_MESSAGE')
+      }}</span>
+    </div>
+    <EmptyState
+      v-else-if="!isLoading && !agentMetrics.length"
+      :title="$t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.NO_AGENTS')"
+    />
+    <div v-if="agentMetrics.length > 0" class="table-pagination">
+      <VePagination
+        :total="agents.length"
+        :page-index="pageIndex"
+        :page-size="25"
+        :page-size-option="[25]"
+        @on-page-number-change="onPageNumberChange"
+      />
+    </div>
+  </div>
+</template>
 
 <style lang="scss" scoped>
 .agent-table-container {
@@ -163,7 +174,6 @@ export default {
       .title {
         @apply text-sm m-0 leading-[1.2] text-slate-800 dark:text-slate-100;
       }
-
       .sub-title {
         @apply text-xs text-slate-600 dark:text-slate-200;
       }

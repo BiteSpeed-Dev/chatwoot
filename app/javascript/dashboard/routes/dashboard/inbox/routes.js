@@ -2,6 +2,10 @@ import { frontendURL } from 'dashboard/helper/URLHelper';
 const InboxListView = () => import('./InboxList.vue');
 const InboxDetailView = () => import('./InboxView.vue');
 const InboxEmptyStateView = () => import('./InboxEmptyState.vue');
+import {
+  ROLES,
+  CONVERSATION_PERMISSIONS,
+} from 'dashboard/constants/permissions.js';
 
 export const routes = [
   {
@@ -12,13 +16,17 @@ export const routes = [
         path: '',
         name: 'inbox_view',
         component: InboxEmptyStateView,
-        roles: ['administrator', 'agent'],
+        meta: {
+          permissions: [...ROLES, ...CONVERSATION_PERMISSIONS],
+        },
       },
       {
         path: ':notification_id',
         name: 'inbox_view_conversation',
         component: InboxDetailView,
-        roles: ['administrator', 'agent'],
+        meta: {
+          permissions: [...ROLES, ...CONVERSATION_PERMISSIONS],
+        },
       },
     ],
   },

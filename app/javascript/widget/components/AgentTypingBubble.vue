@@ -1,3 +1,14 @@
+<script>
+import { useDarkMode } from 'widget/composables/useDarkMode';
+export default {
+  name: 'AgentTypingBubble',
+  setup() {
+    const { getThemeClass } = useDarkMode();
+    return { getThemeClass };
+  },
+};
+</script>
+
 <template>
   <div class="agent-message-wrap">
     <div class="agent-message">
@@ -5,7 +16,7 @@
       <div class="message-wrap mt-2">
         <div
           class="typing-bubble chat-bubble agent"
-          :class="$dm('bg-white', 'dark:bg-slate-700')"
+          :class="getThemeClass('bg-white', 'dark:bg-slate-700')"
         >
           <img
             src="~widget/assets/images/typing.gif"
@@ -16,14 +27,6 @@
     </div>
   </div>
 </template>
-
-<script>
-import darkModeMixing from 'widget/mixins/darkModeMixin.js';
-export default {
-  name: 'AgentTypingBubble',
-  mixins: [darkModeMixing],
-};
-</script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang="scss" scoped>

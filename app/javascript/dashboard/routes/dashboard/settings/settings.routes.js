@@ -1,4 +1,9 @@
 import { frontendURL } from '../../../helper/URLHelper';
+import {
+  ROLES,
+  CONVERSATION_PERMISSIONS,
+} from 'dashboard/constants/permissions.js';
+
 import account from './account/account.routes';
 import agent from './agents/agent.routes';
 import agentBot from './agentBots/agentBot.routes';
@@ -9,7 +14,6 @@ import billing from './billing/billing.routes';
 import campaigns from './campaigns/campaigns.routes';
 import canned from './canned/canned.routes';
 import inbox from './inbox/inbox.routes';
-import integrationapps from './integrationapps/integrations.routes';
 import integrations from './integrations/integrations.routes';
 import labels from './labels/labels.routes';
 import macros from './macros/macros.routes';
@@ -17,6 +21,7 @@ import reports from './reports/reports.routes';
 import store from '../../../store';
 import sla from './sla/sla.routes';
 import teams from './teams/teams.routes';
+import customRoles from './customRoles/customRole.routes';
 import profile from './profile/profile.routes';
 
 export default {
@@ -24,9 +29,14 @@ export default {
     {
       path: frontendURL('accounts/:accountId/settings'),
       name: 'settings_home',
-      roles: ['administrator', 'agent'],
+      meta: {
+        permissions: [...ROLES, ...CONVERSATION_PERMISSIONS],
+      },
       redirect: () => {
-        if (store.getters.getCurrentRole === 'administrator') {
+        if (
+          store.getters.getCurrentRole === 'administrator' &&
+          store.getters.getCurrentCustomRoleId === null
+        ) {
           return frontendURL('accounts/:accountId/settings/general');
         }
         return frontendURL('accounts/:accountId/settings/canned-response');
@@ -47,8 +57,8 @@ export default {
     ...reports.routes,
     ...sla.routes,
     ...teams.routes,
+    ...customRoles.routes,
     ...profile.routes,
     ...campaigns.routes,
-    ...integrationapps.routes,
   ],
 };

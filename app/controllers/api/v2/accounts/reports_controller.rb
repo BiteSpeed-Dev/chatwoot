@@ -71,7 +71,9 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
   end
 
   def check_authorization
-    raise Pundit::NotAuthorizedError unless Current.account_user.administrator?
+    return if Current.account_user.administrator?
+
+    raise Pundit::NotAuthorizedError
   end
 
   def common_params
@@ -136,3 +138,5 @@ class Api::V2::Accounts::ReportsController < Api::V1::Accounts::BaseController
     current_summary.merge(previous: previous_summary)
   end
 end
+
+Api::V2::Accounts::ReportsController.prepend_mod_with('Api::V2::Accounts::ReportsController')

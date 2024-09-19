@@ -1,3 +1,28 @@
+<script>
+import Spinner from 'shared/components/Spinner.vue';
+
+export default {
+  name: 'MetricCard',
+  components: {
+    Spinner,
+  },
+  props: {
+    header: {
+      type: String,
+      default: '',
+    },
+    isLoading: {
+      type: Boolean,
+      default: false,
+    },
+    loadingMessage: {
+      type: String,
+      default: '',
+    },
+  },
+};
+</script>
+
 <template>
   <div
     class="metric-card flex flex-col m-2 p-4 border border-solid overflow-hidden rounded-md flex-grow shadow-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-800 border-slate-75 dark:border-slate-700 min-h-[10rem]"
@@ -11,7 +36,6 @@
             {{ header }}
           </h5>
           <span
-            v-if="isLive"
             class="flex flex-row items-center pr-2 pl-2 m-1 rounded-sm text-green-400 dark:text-green-400 text-xs bg-green-100/30 dark:bg-green-100/20"
           >
             <span
@@ -29,7 +53,6 @@
     </div>
     <div
       v-if="!isLoading"
-      :class="!isLive ? 'px-0' : ''"
       class="card-body max-w-full w-full ml-auto mr-auto justify-between flex"
     >
       <slot />
@@ -38,45 +61,14 @@
       v-else-if="isLoading"
       class="items-center flex text-base justify-center px-12 py-6"
     >
-      <spinner />
+      <Spinner />
       <span class="text-slate-300 dark:text-slate-200">
         {{ loadingMessage }}
       </span>
     </div>
   </div>
 </template>
-<script>
-import Spinner from 'shared/components/Spinner.vue';
 
-export default {
-  name: 'MetricCard',
-  components: {
-    Spinner,
-  },
-  props: {
-    isLive: {
-      type: Boolean,
-      default: true,
-    },
-    header: {
-      type: String,
-      default: '',
-    },
-    isLoading: {
-      type: Boolean,
-      default: false,
-    },
-    loadingMessage: {
-      type: String,
-      default: '',
-    },
-    isFilter: {
-      type: Boolean,
-      default: false,
-    },
-  },
-};
-</script>
 <style lang="scss" scoped>
 .metric-card {
   @apply flex flex-col mb-2 p-4 border border-solid overflow-hidden rounded-md flex-grow shadow-sm text-slate-700 dark:text-slate-100 bg-white dark:bg-slate-800 border-slate-75 dark:border-slate-700 min-h-[10rem];
@@ -106,11 +98,9 @@ export default {
 .card-body {
   .metric-content {
     @apply pb-2;
-
     .heading {
       @apply text-base text-slate-700 dark:text-slate-100;
     }
-
     .metric {
       @apply text-woot-800 dark:text-woot-300 text-3xl mb-0 mt-1;
     }

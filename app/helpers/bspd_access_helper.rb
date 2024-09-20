@@ -5,7 +5,7 @@ module BspdAccessHelper
     # if api call is successful, return true
     # else return false
 
-    response = HTTParty.get("http://localhost:3003/csdb/auth/verify?accountId=#{active_account_id}")
+    response = HTTParty.get("http://localhost:3003/prod/csdb/auth/verify?accountId=#{active_account_id}")
     Rails.logger.info "BSPD Access Helper: Billing status response - #{response}"
     response.success?
   rescue StandardError => e

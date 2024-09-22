@@ -14,7 +14,7 @@ module BspdAccessHelper
     result = false
 
     begin
-      response = HTTParty.get("http://localhost:3003/prod/csdb/auth/verify?accountId=#{active_account_id}")
+      response = HTTParty.get("https://ufg5p259v2.execute-api.us-east-1.amazonaws.com/prod/csdb/auth/verify?accountId=#{active_account_id}")
       Rails.logger.info "BSPD Access Helper: Billing status response - #{response}"
 
       result = response.success?

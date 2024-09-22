@@ -26,4 +26,9 @@ module BspdAccessHelper
     Redis::Alfred.setex(cache_key, result.to_s, CACHE_TTL)
     result
   end
+
+  def clear_cache(active_account_id)
+    cache_key = "bspd:billing_status:#{active_account_id}"
+    Redis::Alfred.delete(cache_key)
+  end
 end

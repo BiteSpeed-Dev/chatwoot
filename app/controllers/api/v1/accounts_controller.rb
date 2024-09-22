@@ -1,6 +1,7 @@
 class Api::V1::AccountsController < Api::BaseController
   include AuthHelper
   include CacheKeysHelper
+  include BspdAccessHelper
 
   skip_before_action :authenticate_user!, :set_current_user, :handle_with_exception,
                      only: [:create], raise: false
@@ -53,6 +54,11 @@ class Api::V1::AccountsController < Api::BaseController
   def update_active_at
     @current_account_user.active_at = Time.now.utc
     @current_account_user.save!
+    head :ok
+  end
+
+  def clear_billing_cache
+    clear_cache(params[:id])
     head :ok
   end
 

@@ -39,6 +39,7 @@ Rails.application.routes.draw do
           post :update_active_at
           get :cache_keys
           post :clear_billing_cache
+          post :delete_messages_with_source_id
         end
 
         scope module: :accounts do
@@ -92,7 +93,6 @@ Rails.application.routes.draw do
                   post :translate
                   post :retry
                   patch :update_with_source_id
-                  delete :destroy_with_source_id
                 end
               end
               resources :assignments, only: [:create]

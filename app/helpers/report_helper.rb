@@ -44,11 +44,8 @@ module ReportHelper
   end
 
   def conversations
-    # TODO: [P0] fix why numbers not visible in the report
-    if params[:label].present?
-      filtered_converstations = scope.conversations.where(account_id: account.id, created_at: range)
-      filtered_converstations.tagged_with([params[:label]], any: true)
-
+    if params[:assignee_id].present?
+      scope.conversations.where(account_id: account.id, created_at: range, assignee_id: params[:assignee_id])
     else
       scope.conversations.where(account_id: account.id, created_at: range)
     end
@@ -63,8 +60,15 @@ module ReportHelper
   end
 
   def resolutions
-    scope.reporting_events.joins(:conversation).select(:conversation_id).where(account_id: account.id, name: :conversation_resolved,
-                                                                               conversations: { status: :resolved }, created_at: range).distinct
+    if params[:assignee_id].present?
+      # rubocop:disable Layout/LineLength
+      scope.reporting_events.joins(:conversation).select(:conversation_id).where(account_id: account.id, name: :conversation_resolved, user_id: params[:assignee_id],
+                                                                                 conversations: { status: :resolved }, created_at: range).distinct
+      # rubocop:enable Layout/LineLength
+    else
+      scope.reporting_events.joins(:conversation).select(:conversation_id).where(account_id: account.id, name: :conversation_resolved,
+                                                                                 conversations: { status: :resolved }, created_at: range).distinct
+    end
   end
 
   def bot_resolutions
@@ -98,13 +102,10 @@ module ReportHelper
     grouped_reporting_events.average(:value)
   end
 
-  # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Layout/LineLength
   def avg_resolution_time_summary
-    if params[:label].present?
-      label_conversations = scope.conversations.tagged_with(params[:labels], any: true)
+    if params[:assignee_id].present?
       reporting_events = scope.reporting_events
-                              .where(name: 'conversation_resolved', account_id: account.id, created_at: range).where(conversation_id: label_conversations.pluck(:id))
+                              .where(name: 'conversation_resolved', account_id: account.id, created_at: range, user_id: params[:assignee_id])
     else
       reporting_events = scope.reporting_events
                               .where(name: 'conversation_resolved', account_id: account.id, created_at: range)
@@ -120,8 +121,6 @@ module ReportHelper
     avg_rt
   end
 
-  # rubocop:enable Metrics/AbcSize
-  # rubocop:enable Layout/LineLength
   def reply_time_summary
     reporting_events = scope.reporting_events
                             .where(name: 'reply_time', account_id: account.id, created_at: range)
@@ -132,13 +131,10 @@ module ReportHelper
     reply_time
   end
 
-  # rubocop:disable Metrics/AbcSize
-  # rubocop:disable Layout/LineLength
   def avg_first_response_time_summary
-    if params[:label].present?
-      label_conversations = scope.conversations.tagged_with(params[:labels], any: true)
+    if params[:assignee_id].present?
       reporting_events = scope.reporting_events
-                              .where(name: 'first_response', account_id: account.id, created_at: range).where(conversation_id: label_conversations.pluck(:id))
+                              .where(name: 'first_response', account_id: account.id, created_at: range, user_id: params[:assignee_id])
     else
       reporting_events = scope.reporting_events
                               .where(name: 'first_response', account_id: account.id, created_at: range)
@@ -153,8 +149,6 @@ module ReportHelper
 
     avg_frt
   end
-  # rubocop:enable Layout/LineLength
-  # rubocop:enable Metrics/AbcSize
 
   def online_time_summary
     audit_logs = Audited::Audit.where(user_id: scope.id, associated_id: account.id, created_at: range, auditable_type: 'AccountUser',

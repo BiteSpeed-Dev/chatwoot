@@ -16,9 +16,11 @@ const getLastNonActivityMessage = (messageInStore, messageFromAPI) => {
 export const filterDuplicateIdMessages = (messages = []) => {
   const messagesWithoutDuplicateId = [];
 
+  const messageIdMap = {};
   messages.forEach(message => {
-    if (messagesWithoutDuplicateId.findIndex(m1 => m1.id === message.id) < 0) {
+    if (!messageIdMap[message.id]) {
       messagesWithoutDuplicateId.push(message);
+      messageIdMap[message.id] = true;
     }
   });
 

@@ -252,6 +252,7 @@ export default {
         try {
           const { fileUrl, blobId } = await uploadFile(file.file);
           this.uploadedFile = {
+            file: file.file,
             name: file.name,
             url: fileUrl,
             blobId: blobId,
@@ -284,11 +285,15 @@ export default {
           processed_params: this.processedParams,
         },
       };
-      // If there's a file upload for the header, you might want to handle it separately
+
       if (this.uploadedFile) {
-        payload.attachments = [this.uploadedFile.blobId];
+        if (this.globalConfig.directUploadsEnabled) {
+          payload.files = [this.uploadedFile.blobId];
+        } else {
+          payload.files = [this.uploadedFile.file];
+        }
       }
-      this.$emit('sendMessage', payload);
+      this.$emit('createPendingMessageAndSend', payload);
     },
     processVariable(str) {
       return str.replace(/{{|}}/g, '');

@@ -284,6 +284,7 @@ export default {
           namespace: this.template.namespace,
           processed_params: this.processedParams,
         },
+        private: false,
       };
       if (this.uploadedFile) {
         payload.files = [this.uploadedFile.file];

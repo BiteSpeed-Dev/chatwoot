@@ -256,8 +256,8 @@ export default {
             url: fileUrl,
             blobId: blobId,
           };
-          this.processedParams.header[this.processVariable('{{header}}')] =
-            fileUrl;
+
+          this.processedParams.header[this.processVariable('{{1}}')] = fileUrl;
         } catch (error) {
           // Handle error
           // console.error('Error uploading file:', error);

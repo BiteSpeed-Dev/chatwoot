@@ -233,6 +233,7 @@ export default {
       this.$emit('assign-team', team);
     },
     resolveConversations() {
+      
       this.$emit('resolve-conversations');
     },
     toggleUpdateActions() {

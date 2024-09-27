@@ -69,6 +69,15 @@
             :value="contact.phone_number"
             icon="call"
             emoji="📞"
+            isPhone=true
+            :title="$t('CONTACT_PANEL.PHONE_NUMBER')"
+            show-copy
+          />
+          <contact-info-row
+            :value="contact.phone_number"
+            icon="call"
+            emoji="📞"
+            isPhone=true
             :title="$t('CONTACT_PANEL.PHONE_NUMBER')"
             show-copy
           />

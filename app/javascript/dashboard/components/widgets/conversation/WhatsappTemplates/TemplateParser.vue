@@ -285,15 +285,10 @@ export default {
           processed_params: this.processedParams,
         },
       };
-
       if (this.uploadedFile) {
-        if (this.globalConfig.directUploadsEnabled) {
-          payload.files = [this.uploadedFile.blobId];
-        } else {
-          payload.files = [this.uploadedFile.file];
-        }
+        payload.files = [this.uploadedFile.file];
       }
-      this.$emit('createPendingMessageAndSend', payload);
+      this.$emit('sendMessage', payload);
     },
     processVariable(str) {
       return str.replace(/{{|}}/g, '');

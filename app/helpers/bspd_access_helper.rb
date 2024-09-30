@@ -17,13 +17,14 @@ module BspdAccessHelper
       response = HTTParty.get("https://ufg5p259v2.execute-api.us-east-1.amazonaws.com/prod/csdb/auth/verify?accountId=#{active_account_id}")
       Rails.logger.info "BSPD Access Helper: Billing status response - #{response}"
 
-      result = response.success?
+      result = response.success? && response.code != 500
+
+      Redis::Alfred.setex(cache_key, result.to_s, CACHE_TTL) unless response.code == 500
     rescue StandardError => e
       Rails.logger.error "BSPD Access Helper: Error checking billing status - #{e.message}"
       result = false
     end
 
-    Redis::Alfred.setex(cache_key, result.to_s, CACHE_TTL)
     result
   end
 

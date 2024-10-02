@@ -32,6 +32,16 @@
         class-names="p-0"
         @click="onCopy"
       />
+      <woot-button
+        v-if="showCopy"
+        type="submit"
+        variant="clear"
+        size="tiny"
+        color-scheme="secondary"
+        icon="clipboard"
+        class-names="p-0"
+        @click="onCallButtonClick"
+      />
     </a>
 
     <div
@@ -60,6 +70,8 @@
 import alertMixin from 'shared/mixins/alertMixin';
 import EmojiOrIcon from 'shared/components/EmojiOrIcon.vue';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
+import Calling from '../../../../api/callling';
+import { mapGetters } from 'vuex';
 
 export default {
   components: {
@@ -88,12 +100,26 @@ export default {
       default: false,
     },
   },
+  computed: {
+    ...mapGetters({
+      currentChat: 'getSelectedChat',
+    }),
+  },
   methods: {
     async onCopy(e) {
+      console.log(this.currentChat, 'current chat here')
       e.preventDefault();
       await copyTextToClipboard(this.value);
       this.showAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
     },
+    async onCallButtonClick(e) {
+      e.preventDefault();
+      await Calling.startCall({
+        from: '08467046560',
+        to: '08467046560',
+        callerId: '01140845398'
+      })
+    }
   },
 };
 </script>

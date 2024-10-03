@@ -36,7 +36,8 @@ class Api::V1::Accounts::Conversations::CallController < Api::V1::Accounts::Conv
       StatusCallback: payload['statusCallback'],
       'StatusCallbackEvents[0]': 'terminal',
       'StatusCallbackEvents[1]': 'answered',
-      StatusCallbackContentType: 'application/json'
+      StatusCallbackContentType: 'application/json',
+      Record: true
     }
 
     response = HTTParty.post(

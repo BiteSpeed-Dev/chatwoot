@@ -13,7 +13,11 @@ module CallHelper
       if callback_payload['Status'] == 'failed' && user_call_status == 'canceled'
         return "Call failed, as user either didn't answer the call or rejected it."
       end
-      return "Call was completed\nCall Duration: #{user_log['OnCallDuration']}" if callback_payload['Status'] == 'completed'
+
+      if callback_payload['Status'] == 'completed'
+        call_duration = format_duration_from_seconds(user_log['OnCallDuration'])
+        return "Call completed with user\n\nCall Duration: #{call_duration}\nCall recording link: #{callback_payload['RecordingUrl']}"
+      end
     when 'answered'
       if agent_call_status == 'in-progress' && user_call_status == 'in-progress'
         'Both user and agent are on the call'
@@ -21,5 +25,18 @@ module CallHelper
         'Agent has picked up the call'
       end
     end
+  end
+
+  def format_duration_from_seconds(duration_seconds)
+    hours = duration_seconds / 3600
+    minutes = (duration_seconds % 3600) / 60
+    remaining_seconds = duration_seconds % 60
+
+    result = []
+    result << "#{hours} hours" if hours > 0
+    result << "#{minutes} minutes" if minutes > 0
+    result << "#{remaining_seconds} seconds" if remaining_seconds > 0
+
+  result.join(' ')
   end
 end

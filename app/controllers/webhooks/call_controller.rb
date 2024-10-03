@@ -1,14 +1,19 @@
 # app/controllers/webhooks/call_controller.rb
+require 'json'
 class Webhooks::CallController < ActionController::API
+  include CallHelper
   def handle_call_callback
-    payload = request.body # Ensure you call .read to get the body content
+    payload = request.body.read
+    parsed_body = JSON.parse(payload)
+
     conversation = Conversation.where({
-      account_id: params[:account_id],
-      inbox_id: params[:inbox_id],
-      display_id: params[:conversation_id]
-    }).first
-    
-    conversation.messages.create!(private_message_params(payload.to_json, conversation))
+                                        account_id: params[:account_id],
+                                        inbox_id: params[:inbox_id],
+                                        display_id: params[:conversation_id]
+                                      }).first
+    call_log_message = get_call_log_string(parsed_body)
+
+    conversation.messages.create!(private_message_params(call_log_message, conversation))
     head :ok
   end
 

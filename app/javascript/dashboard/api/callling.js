@@ -2,17 +2,21 @@ import axios from 'axios';
 import ApiClient from './ApiClient';
 
 class CallingAPI extends ApiClient {
-  startCall({apiKey, token, subDomain, from, to, sid, callerId}) {
-    const formData = new FormData();
-    formData.append('To', to);
-    formData.append('From', from) 
-    formData.append('CallerId', callerId)
-    formData.append('StatusCallback', 'http://localhost:3000')
-    formData.append('StatusCallbackEvents', ['terminal', 'answered'])
-    const url = `https://${apiKey}:${token}${subDomain}/v1/Accounts/${sid}/Calls/connect`
+  startCall({to, from, accountId, conversationId, inboxId, accessToken}) {
+    const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/call`
     return axios.post(
       url,
-      formData
+      {
+        to,
+        from,
+        statusCallback: `https://glorious-heavily-platypus.ngrok-free.app/webhooks/call/${accountId}/${inboxId}/${conversationId}`
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          api_access_token: accessToken
+        }
+      }
     )
   }
 }

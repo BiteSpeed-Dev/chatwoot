@@ -104,21 +104,32 @@ export default {
     ...mapGetters({
       currentChat: 'getSelectedChat',
     }),
+    ...mapGetters({
+      currentUser: 'getCurrentUser',
+    }),
   },
   methods: {
     async onCopy(e) {
-      console.log(this.currentChat, 'current chat here')
+      console.log(this.currentChat, 'current chat here', this.currentUser)
       e.preventDefault();
       await copyTextToClipboard(this.value);
       this.showAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
     },
     async onCallButtonClick(e) {
       e.preventDefault();
+      if (!this.currentUser.custom_attributes.phone_number) {
+        this.showAlert('Please update your phone number in profile to make a call');
+        return;
+      }
       await Calling.startCall({
-        from: '08467046560',
-        to: '08467046560',
-        callerId: '01140845398'
+        from: this.currentUser.custom_attributes.phone_number,
+        to: this.value,
+        accountId: this.currentChat.account_id,
+        conversationId: this.currentChat.id,
+        inboxId: this.currentChat.inbox_id,
+        accessToken: this.currentUser.access_token
       })
+      this.showAlert('Call initiated');
     }
   },
 };

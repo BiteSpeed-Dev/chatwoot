@@ -99,6 +99,15 @@
         <woot-button
           v-tooltip="$t('CONTACT_PANEL.NEW_MESSAGE')"
           title="$t('CONTACT_PANEL.NEW_MESSAGE')"
+          icon="call"
+          size="small"
+          @click="callUser"
+        >
+          Call
+        </woot-button>
+        <woot-button
+          v-tooltip="$t('CONTACT_PANEL.NEW_MESSAGE')"
+          title="$t('CONTACT_PANEL.NEW_MESSAGE')"
           icon="chat"
           size="small"
           @click="toggleConversationModal"
@@ -202,6 +211,7 @@ import {
   isAInboxViewRoute,
   getConversationDashboardRoute,
 } from '../../../../helper/routeHelpers';
+import Calling from '../../../../api/callling';
 
 export default {
   components: {
@@ -248,7 +258,14 @@ export default {
   computed: {
     ...mapGetters({
       uiFlags: 'contacts/getUIFlags',
+      accountId: 'getCurrentAccountId',
+      currentChat: 'getSelectedChat',
+      currentUser: 'getCurrentUser',
+      getAccount: 'accounts/getAccount',
     }),
+    currentAccount() {
+      return this.getAccount(this.accountId) || {};
+    },
     contactProfileLink() {
       return `/app/accounts/${this.$route.params.accountId}/contacts/${this.contact.id}`;
     },
@@ -307,6 +324,23 @@ export default {
     confirmDeletion() {
       this.deleteContact(this.contact);
       this.closeDelete();
+    },
+    async callUser() {
+      if (!this.currentUser.custom_attributes.phone_number) {
+        this.showAlert(
+          'Please update your phone number in profile to make a call'
+        );
+        return;
+      }
+      await Calling.startCall({
+        from: this.currentUser.custom_attributes.phone_number,
+        to: this.contact.phone_number,
+        accountId: this.currentChat.account_id,
+        conversationId: this.currentChat.id,
+        inboxId: this.currentChat.inbox_id,
+        accessToken: this.currentUser.access_token,
+      });
+      this.showAlert('Call initiated');
     },
     closeDelete() {
       this.showDeleteModal = false;

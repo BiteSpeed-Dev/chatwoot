@@ -97,6 +97,7 @@
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
         <woot-button
+          v-if="currentAccount.custom_attributes.call_config.enabled"
           v-tooltip="$t('CONTACT_PANEL.NEW_MESSAGE')"
           title="$t('CONTACT_PANEL.NEW_MESSAGE')"
           icon="call"

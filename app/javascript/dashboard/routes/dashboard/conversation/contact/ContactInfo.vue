@@ -99,8 +99,8 @@
         <woot-button
           v-if="currentAccount.custom_attributes.call_config.enabled"
           v-tooltip="$t('CONTACT_PANEL.NEW_MESSAGE')"
-          title="$t('CONTACT_PANEL.NEW_MESSAGE')"
-          icon="call"
+          :title="$t('CONTACT_PANEL.NEW_MESSAGE')"
+          :custom-icon="callingIcon"
           size="small"
           @click="callUser"
         >
@@ -213,6 +213,7 @@ import {
   getConversationDashboardRoute,
 } from '../../../../helper/routeHelpers';
 import Calling from '../../../../api/callling';
+import callingIcon from '../../../../assets/images/calling.svg';
 
 export default {
   components: {
@@ -254,6 +255,7 @@ export default {
       showMergeModal: false,
       showUnsubModal: false,
       showDeleteModal: false,
+      callingIcon,
     };
   },
   computed: {
@@ -329,7 +331,7 @@ export default {
     async callUser() {
       if (!this.currentUser.custom_attributes.phone_number) {
         this.showAlert(
-          'Please update your phone number in profile to make a call'
+          'Please update your phone number in profile settings to make a call'
         );
         return;
       }

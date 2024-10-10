@@ -32,16 +32,6 @@
         class-names="p-0"
         @click="onCopy"
       />
-      <woot-button
-        v-if="showCopy"
-        type="submit"
-        variant="clear"
-        size="tiny"
-        color-scheme="secondary"
-        icon="clipboard"
-        class-names="p-0"
-        @click="onCallButtonClick"
-      />
     </a>
 
     <div
@@ -70,8 +60,6 @@
 import alertMixin from 'shared/mixins/alertMixin';
 import EmojiOrIcon from 'shared/components/EmojiOrIcon.vue';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
-import Calling from '../../../../api/callling';
-import { mapGetters } from 'vuex';
 
 export default {
   components: {
@@ -100,37 +88,12 @@ export default {
       default: false,
     },
   },
-  computed: {
-    ...mapGetters({
-      currentChat: 'getSelectedChat',
-    }),
-    ...mapGetters({
-      currentUser: 'getCurrentUser',
-    }),
-  },
   methods: {
     async onCopy(e) {
-      console.log(this.currentChat, 'current chat here', this.currentUser)
       e.preventDefault();
       await copyTextToClipboard(this.value);
       this.showAlert(this.$t('CONTACT_PANEL.COPY_SUCCESSFUL'));
     },
-    async onCallButtonClick(e) {
-      e.preventDefault();
-      if (!this.currentUser.custom_attributes.phone_number) {
-        this.showAlert('Please update your phone number in profile to make a call');
-        return;
-      }
-      await Calling.startCall({
-        from: this.currentUser.custom_attributes.phone_number,
-        to: this.value,
-        accountId: this.currentChat.account_id,
-        conversationId: this.currentChat.id,
-        inboxId: this.currentChat.inbox_id,
-        accessToken: this.currentUser.access_token
-      })
-      this.showAlert('Call initiated');
-    }
   },
 };
 </script>

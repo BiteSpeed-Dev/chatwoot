@@ -98,10 +98,11 @@
       <div class="flex items-center w-full mt-0.5 gap-2">
         <woot-button
           v-if="currentAccount.custom_attributes.call_config.enabled"
-          v-tooltip="$t('CONTACT_PANEL.NEW_MESSAGE')"
-          :title="$t('CONTACT_PANEL.NEW_MESSAGE')"
+          v-tooltip="'Call this user'"
+          title="Call user"
           :custom-icon="callingIcon"
           size="small"
+          class="no-shrink-button"
           @click="callUser"
         >
           Call
@@ -463,5 +464,11 @@ export default {
   position: absolute;
   right: var(--space-normal);
   top: 0;
+}
+
+.no-shrink-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: max-content;
 }
 </style>

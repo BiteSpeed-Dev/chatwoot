@@ -97,6 +97,17 @@
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
         <woot-button
+          v-if="currentAccount.custom_attributes.call_config.enabled"
+          v-tooltip="'Call this user'"
+          title="Call user"
+          :custom-icon="callingIcon"
+          size="small"
+          class="no-shrink-button"
+          @click="callUser"
+        >
+          Call
+        </woot-button>
+        <woot-button
           v-tooltip="$t('CONTACT_PANEL.NEW_MESSAGE')"
           title="$t('CONTACT_PANEL.NEW_MESSAGE')"
           icon="chat"
@@ -202,6 +213,8 @@ import {
   isAInboxViewRoute,
   getConversationDashboardRoute,
 } from '../../../../helper/routeHelpers';
+import Calling from '../../../../api/callling';
+import callingIcon from '../../../../assets/images/calling.svg';
 
 export default {
   components: {
@@ -243,12 +256,20 @@ export default {
       showMergeModal: false,
       showUnsubModal: false,
       showDeleteModal: false,
+      callingIcon,
     };
   },
   computed: {
     ...mapGetters({
       uiFlags: 'contacts/getUIFlags',
+      accountId: 'getCurrentAccountId',
+      currentChat: 'getSelectedChat',
+      currentUser: 'getCurrentUser',
+      getAccount: 'accounts/getAccount',
     }),
+    currentAccount() {
+      return this.getAccount(this.accountId) || {};
+    },
     contactProfileLink() {
       return `/app/accounts/${this.$route.params.accountId}/contacts/${this.contact.id}`;
     },
@@ -307,6 +328,23 @@ export default {
     confirmDeletion() {
       this.deleteContact(this.contact);
       this.closeDelete();
+    },
+    async callUser() {
+      if (!this.currentUser.custom_attributes.phone_number) {
+        this.showAlert(
+          'Please update your phone number in profile settings to make a call'
+        );
+        return;
+      }
+      await Calling.startCall({
+        from: this.currentUser.custom_attributes.phone_number,
+        to: this.contact.phone_number,
+        accountId: this.currentChat.account_id,
+        conversationId: this.currentChat.id,
+        inboxId: this.currentChat.inbox_id,
+        accessToken: this.currentUser.access_token,
+      });
+      this.showAlert('Call initiated');
     },
     closeDelete() {
       this.showDeleteModal = false;
@@ -426,5 +464,11 @@ export default {
   position: absolute;
   right: var(--space-normal);
   top: 0;
+}
+
+.no-shrink-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: max-content;
 }
 </style>

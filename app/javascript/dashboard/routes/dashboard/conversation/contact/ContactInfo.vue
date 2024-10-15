@@ -97,7 +97,7 @@
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
         <woot-button
-          v-if="currentAccount.custom_attributes.call_config.enabled"
+          v-if="currentAccount?.custom_attributes?.call_config?.enabled"
           v-tooltip="'Call this user'"
           title="Call user"
           :custom-icon="callingIcon"

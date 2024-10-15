@@ -97,7 +97,7 @@
       </div>
       <div class="flex items-center w-full mt-0.5 gap-2">
         <woot-button
-          v-if="currentAccount?.custom_attributes?.call_config?.enabled"
+          v-if="shouldShowCallButton"
           v-tooltip="'Call this user'"
           title="Call user"
           :custom-icon="callingIcon"
@@ -269,6 +269,11 @@ export default {
     }),
     currentAccount() {
       return this.getAccount(this.accountId) || {};
+    },
+    shouldShowCallButton() {
+      if (this.currentAccount?.custom_attributes?.call_config?.enabled)
+        return true;
+      return false;
     },
     contactProfileLink() {
       return `/app/accounts/${this.$route.params.accountId}/contacts/${this.contact.id}`;

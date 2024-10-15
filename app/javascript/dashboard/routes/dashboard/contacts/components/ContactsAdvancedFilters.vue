@@ -168,12 +168,11 @@ export default {
     shouldShowContactDetails() {
       const contactMasking =
         this.currentAccount?.custom_attributes?.contact_masking;
-      if (!contactMasking) return true;
-      if (this.currentUser.role === 'administrator' && !contactMasking?.admin)
-        return true;
-      if (this.currentUser.role === 'agent' && !contactMasking?.agent)
-        return true;
-      return false;
+      if (this.currentUser.role === 'administrator' && contactMasking?.admin)
+        return false;
+      if (this.currentUser.role === 'agent' && contactMasking?.agent)
+        return false;
+      return true;
     },
     filterGroupsFilter() {
       if (this.shouldShowContactDetails) {

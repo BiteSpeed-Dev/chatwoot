@@ -271,7 +271,10 @@ export default {
       return this.getAccount(this.accountId) || {};
     },
     shouldShowCallButton() {
-      if (this.currentAccount?.custom_attributes?.call_config?.enabled)
+      if (
+        this.currentAccount?.custom_attributes?.call_config?.enabled &&
+        this.contact.phone_number
+      )
         return true;
       return false;
     },
@@ -335,7 +338,7 @@ export default {
       this.closeDelete();
     },
     async callUser() {
-      if (!this.currentUser.custom_attributes.phone_number) {
+      if (!this.currentUser?.custom_attributes?.phone_number) {
         this.showAlert(
           'Please update your phone number in profile settings to make a call'
         );

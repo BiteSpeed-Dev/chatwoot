@@ -1,4 +1,5 @@
 module CallHelper
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
   def get_call_log_string(callback_payload)
     agent_log = callback_payload['Legs'].first
     user_log = callback_payload['Legs'].last
@@ -10,13 +11,11 @@ module CallHelper
     when 'terminal'
       return 'Call was connected to agent but they were busy' if agent_call_status == 'busy'
       return "Call was connected to agent but they didn't pick up the call" if agent_call_status == 'no-answer'
-      if callback_payload['Status'] == 'failed' && user_call_status == 'canceled'
-        return "Call failed, as user either didn't answer the call or rejected it."
-      end
+      return "Call failed, as it couldn't be connect to the user." if callback_payload['Status'] == 'failed' && user_call_status == 'canceled'
 
       if callback_payload['Status'] == 'completed'
         call_duration = format_duration_from_seconds(user_log['OnCallDuration'])
-        return "Call completed with user\n\nCall Duration: #{call_duration}\nCall recording link: #{callback_payload['RecordingUrl']}"
+        "Call completed with user\n\nCall Duration: #{call_duration}\nCall recording link: #{callback_payload['RecordingUrl']}"
       end
     when 'answered'
       if agent_call_status == 'in-progress' && user_call_status == 'in-progress'
@@ -26,6 +25,7 @@ module CallHelper
       end
     end
   end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
   def format_duration_from_seconds(duration_seconds)
     hours = duration_seconds / 3600
@@ -33,10 +33,10 @@ module CallHelper
     remaining_seconds = duration_seconds % 60
 
     result = []
-    result << "#{hours} hours" if hours > 0
-    result << "#{minutes} minutes" if minutes > 0
-    result << "#{remaining_seconds} seconds" if remaining_seconds > 0
+    result << "#{hours} hours" if hours.positive?
+    result << "#{minutes} minutes" if minutes.positive?
+    result << "#{remaining_seconds} seconds" if remaining_seconds.positive?
 
-  result.join(' ')
+    result.join(' ')
   end
 end

@@ -344,15 +344,23 @@ export default {
         );
         return;
       }
-      await Calling.startCall({
-        from: this.currentUser.custom_attributes.phone_number,
-        to: this.contact.phone_number,
-        accountId: this.currentChat.account_id,
-        conversationId: this.currentChat.id,
-        inboxId: this.currentChat.inbox_id,
-        accessToken: this.currentUser.access_token,
-      });
-      this.showAlert('Call initiated');
+      try {
+        const response = await Calling.startCall({
+          from: this.currentUser.custom_attributes.phone_number,
+          to: this.contact.phone_number,
+          accountId: this.currentChat.account_id,
+          conversationId: this.currentChat.id,
+          inboxId: this.currentChat.inbox_id,
+          accessToken: this.currentUser.access_token,
+        });
+        if (response?.data?.success) {
+          this.showAlert('Call initiated');
+        } else {
+          this.showAlert('Something went wrong in initiating the call.');
+        }
+      } catch (error) {
+        this.showAlert('Something went in intiating the call.');
+      }
     },
     closeDelete() {
       this.showDeleteModal = false;

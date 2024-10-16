@@ -1,8 +1,9 @@
 require 'httparty'
 require 'json'
+require 'rexml/document'
 
 class Api::V1::Accounts::Conversations::CallController < Api::V1::Accounts::Conversations::BaseController
-  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+  # rubocop:disable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity
   def create
     account = Account.find_by(id: params[:account_id])
 
@@ -43,7 +44,23 @@ class Api::V1::Accounts::Conversations::CallController < Api::V1::Accounts::Conv
       body: form_data
     )
 
+    if response.code != 200
+      xml_data = REXML::Document.new(response.body)
+      error_message = xml_data.elements['//Message'].text
+      render json: { success: false, response: error_message }
+      conversation = Conversation.where({
+                                          account_id: params[:account_id],
+                                          display_id: params[:conversation_id]
+                                        }).first
+      conversation.messages.create!(private_message_params("Error in iniating call: #{error_message}", conversation))
+      return
+    end
     render json: { success: true, response: response.body }
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+  def private_message_params(error, conversation)
+    { account_id: conversation.account_id, inbox_id: conversation.inbox_id, message_type: :outgoing, content: '', private: true,
+      additional_attributes: { type: 'error', content: error } }
+  end
+  # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity
 end

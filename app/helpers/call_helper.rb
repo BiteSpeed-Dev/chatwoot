@@ -11,7 +11,7 @@ module CallHelper
     when 'terminal'
       return 'Call was connected to agent but they were busy' if agent_call_status == 'busy'
       return "Call was connected to agent but they didn't pick up the call" if agent_call_status == 'no-answer'
-      return "Call failed, as it couldn't be connect to the user." if callback_payload['Status'] == 'failed' && user_call_status == 'canceled'
+      return 'The call failed, as it couldn’t be connected to the user.' if callback_payload['Status'] == 'failed' && user_call_status == 'canceled'
 
       if callback_payload['Status'] == 'completed'
         call_duration = format_duration_from_seconds(user_log['OnCallDuration'])

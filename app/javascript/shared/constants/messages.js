@@ -42,9 +42,13 @@ export const MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP = {
   '.jpeg': 5,
   '.mp4': 16,
   '.pdf': 100,
+  '.mpeg': 16,
+  '.opus': 16,
+  '.ogg': 16,
+  '.amr': 16,
 };
 
-export const ALLOWED_FILE_TYPES = '.png,.jpeg,.mp4,.pdf';
+export const ALLOWED_FILE_TYPES = '.png,.jpeg,.mp4,.pdf,.mpeg,.opus,.ogg,.amr';
 // 'image/*,' +
 // 'audio/*,' +
 // 'video/*,' +

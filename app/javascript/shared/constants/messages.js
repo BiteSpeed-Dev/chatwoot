@@ -50,7 +50,7 @@ export const MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP = {
   '.ogg': 16,
 };
 
-export const ALLOWED_FILE_TYPES = '.png,.jpeg,.mp4,.pdf,.mp3,.m4a,.amr,.aac';
+export const ALLOWED_FILE_TYPES = '.png,.jpeg,.mp4,.pdf,.mp3,.m4a';
 // 'image/*,' +
 // 'audio/*,' +
 // 'video/*,' +

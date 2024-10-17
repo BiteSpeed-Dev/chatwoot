@@ -833,6 +833,7 @@ export default {
         });
         this.$store.dispatch('bulkActions/clearSelectedConversationIds');
         if (conversationId) {
+          this.markAsUnread(conversationId);
           this.showAlert(
             this.$t(
               'CONVERSATION.CARD_CONTEXT_MENU.API.AGENT_ASSIGNMENT.SUCCESFUL',
@@ -904,6 +905,9 @@ export default {
           conversationId,
           teamId: team.id,
         });
+        if (conversationId) {
+          this.markAsUnread(conversationId);
+        }
         this.showAlert(
           this.$t(
             'CONVERSATION.CARD_CONTEXT_MENU.API.TEAM_ASSIGNMENT.SUCCESFUL',

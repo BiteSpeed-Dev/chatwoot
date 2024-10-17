@@ -250,6 +250,7 @@ export default {
       } else {
         this.assignedAgent = selectedItem;
       }
+      // TODO: mark conversation as unread
     },
 
     onClickAssignTeam(selectedItemTeam) {
@@ -258,6 +259,7 @@ export default {
       } else {
         this.assignedTeam = selectedItemTeam;
       }
+      // TODO: mark conversation as unread
     },
 
     onClickAssignPriority(selectedPriorityItem) {

@@ -90,6 +90,7 @@ import agentMixin from 'dashboard/mixins/agentMixin';
 import teamMixin from 'dashboard/mixins/conversation/teamMixin';
 import { CONVERSATION_PRIORITY } from '../../../../shared/constants/messages';
 import { CONVERSATION_EVENTS } from '../../../helper/AnalyticsHelper/events';
+import { conversationListPageURL } from '../../../helper/URLHelper';
 
 export default {
   components: {
@@ -244,6 +245,36 @@ export default {
       };
       this.assignedAgent = selfAssign;
     },
+    async markAsUnread(conversationId) {
+      try {
+        await this.$store.dispatch('markMessagesUnread', {
+          id: conversationId,
+        });
+        const {
+          params: { accountId, inbox_id: inboxId, label, teamId },
+        } = this.$route;
+        const isFolderView = window.location.pathname.includes('custom_view');
+        const customViewId = isFolderView
+          ? window.location.pathname
+              .split('/')
+              .find(
+                (segment, index, array) =>
+                  array[index - 1] === 'custom_view' && !Number.isNaN(segment)
+              )
+          : null;
+        this.$router.push(
+          conversationListPageURL({
+            accountId,
+            customViewId,
+            inboxId,
+            label,
+            teamId,
+          })
+        );
+      } catch (error) {
+        // Ignore error
+      }
+    },
     onClickAssignAgent(selectedItem) {
       if (this.assignedAgent && this.assignedAgent.id === selectedItem.id) {
         this.assignedAgent = null;
@@ -251,6 +282,7 @@ export default {
         this.assignedAgent = selectedItem;
       }
       // TODO: mark conversation as unread
+      this.markAsUnread(this.currentChat.id);
     },
 
     onClickAssignTeam(selectedItemTeam) {
@@ -260,6 +292,7 @@ export default {
         this.assignedTeam = selectedItemTeam;
       }
       // TODO: mark conversation as unread
+      this.markAsUnread(this.currentChat.id);
     },
 
     onClickAssignPriority(selectedPriorityItem) {

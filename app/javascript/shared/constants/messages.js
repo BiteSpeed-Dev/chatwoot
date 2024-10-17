@@ -46,9 +46,12 @@ export const MAXIMUM_FILE_UPLOAD_SIZE_FOR_WHATSAPP = {
   '.m4a': 16,
   '.amr': 16,
   '.aac': 16,
+  '.opus': 16,
+  '.ogg': 16,
 };
 
-export const ALLOWED_FILE_TYPES = '.png,.jpeg,.mp4,.pdf,.mp3,.m4a,.amr,.aac';
+export const ALLOWED_FILE_TYPES =
+  '.png,.jpeg,.mp4,.pdf,.mp3,.m4a,.amr,.aac,.opus,.ogg';
 // 'image/*,' +
 // 'audio/*,' +
 // 'video/*,' +

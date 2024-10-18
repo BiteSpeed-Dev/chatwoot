@@ -63,6 +63,23 @@
       @assign-labels="onAssignLabels"
       @assign-team="onAssignTeamsForBulk"
     />
+
+    <!-- if unassigned conversations are enabled -->
+    <div
+      v-if="showAssignButton"
+      class="flex justify-center items-center gap-4 py-2 px-4 bg-slate-100 dark:bg-slate-700"
+    >
+      <p class="text-xs m-0">
+        {{ activeAssigneeTabCount }} Unassigned Conversation(s) Available
+      </p>
+      <woot-button
+        variant="hollow"
+        class="text-xs"
+        @click="assignUnassignedConversations"
+      >
+        Assign to Online Agents
+      </woot-button>
+    </div>
     <div
       ref="conversationList"
       class="flex-1 conversations-list"
@@ -157,6 +174,7 @@ import { findSnoozeTime } from 'dashboard/helper/snoozeHelpers';
 import { getUnixTime } from 'date-fns';
 import CustomSnoozeModal from 'dashboard/components/CustomSnoozeModal.vue';
 import IntersectionObserver from './IntersectionObserver.vue';
+import AccountAPI from 'dashboard/api/account';
 
 export default {
   components: {
@@ -293,6 +311,12 @@ export default {
     },
     hasAppliedFiltersOrActiveFolders() {
       return this.hasAppliedFilters || this.hasActiveFolders;
+    },
+    showAssignButton() {
+      return (
+        this.activeAssigneeTab === wootConstants.ASSIGNEE_TYPE.UNASSIGNED &&
+        this.conversationList.length
+      );
     },
     showEndOfListMessage() {
       return (
@@ -833,6 +857,7 @@ export default {
         });
         this.$store.dispatch('bulkActions/clearSelectedConversationIds');
         if (conversationId) {
+          this.markAsUnread(conversationId);
           this.showAlert(
             this.$t(
               'CONVERSATION.CARD_CONTEXT_MENU.API.AGENT_ASSIGNMENT.SUCCESFUL',
@@ -904,6 +929,9 @@ export default {
           conversationId,
           teamId: team.id,
         });
+        if (conversationId) {
+          this.markAsUnread(conversationId);
+        }
         this.showAlert(
           this.$t(
             'CONVERSATION.CARD_CONTEXT_MENU.API.TEAM_ASSIGNMENT.SUCCESFUL',
@@ -1035,6 +1063,22 @@ export default {
       // Then if the custom snooze modal is closed and set the context menu chat id to null
       this.$store.dispatch('setContextMenuChatId', null);
       this.showCustomSnoozeModal = false;
+    },
+    assignUnassignedConversations() {
+      const inboxIds = [];
+      const url = window.location.href;
+      const ifInbox = url.includes('inbox');
+      if (ifInbox) {
+        inboxIds.push(url.split('inbox/')[1]);
+      } else {
+        const inboxes = this.$store.getters['inboxes/getInboxes'];
+        inboxIds.push(inboxes.map(inbox => inbox.id));
+      }
+      AccountAPI.assignUnassignedConversations(inboxIds);
+      this.showAlert(
+        'The conversations will soon be assigned to online agents.',
+        'info'
+      );
     },
   },
 };

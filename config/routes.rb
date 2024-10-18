@@ -96,7 +96,11 @@ Rails.application.routes.draw do
                   patch :update_with_source_id
                 end
               end
-              resources :call, only: [:create]
+              resources :call, only: [:create] do
+                collection do
+                  patch :update_call_config
+                end
+              end
               resources :assignments, only: [:create]
               resources :labels, only: [:create, :index]
               resource :participants, only: [:show, :create, :update, :destroy]

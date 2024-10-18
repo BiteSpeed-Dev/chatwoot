@@ -58,6 +58,23 @@ class Api::V1::Accounts::Conversations::CallController < Api::V1::Accounts::Conv
     render json: { success: true, response: response.body }
   end
 
+  def update_call_config
+    account = Account.find_by(id: params[:account_id])
+    payload = begin
+      JSON.parse(request.body.read)
+    rescue StandardError
+      {}
+    end
+
+    custom_attributes = account.custom_attributes || {}
+
+    updated_custom_attributes = custom_attributes.merge('call_config' => payload['call_config'])
+
+    account.update(custom_attributes: updated_custom_attributes)
+
+    render json: { success: true, message: 'Call config updated successfully' }
+  end
+
   def private_message_params(error, conversation)
     { account_id: conversation.account_id, inbox_id: conversation.inbox_id, message_type: :outgoing, content: '', private: true,
       additional_attributes: { type: 'error', content: error } }

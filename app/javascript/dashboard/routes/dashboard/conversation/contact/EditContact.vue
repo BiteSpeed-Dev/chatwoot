@@ -41,7 +41,22 @@ export default {
   computed: {
     ...mapGetters({
       uiFlags: 'contacts/getUIFlags',
+      accountId: 'getCurrentAccountId',
+      currentUser: 'getCurrentUser',
+      getAccount: 'accounts/getAccount',
     }),
+    currentAccount() {
+      return this.getAccount(this.accountId) || {};
+    },
+    shouldShowContactDetails() {
+      const contactMasking =
+        this.currentAccount?.custom_attributes?.contact_masking;
+      if (this.currentUser.role === 'administrator' && contactMasking?.admin)
+        return false;
+      if (this.currentUser.role === 'agent' && contactMasking?.agent)
+        return false;
+      return true;
+    },
   },
 
   methods: {

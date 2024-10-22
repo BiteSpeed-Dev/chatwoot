@@ -225,7 +225,7 @@ class Conversation < ApplicationRecord
     )
 
     # Clear first_reply_created_at when assignee changes
-    update(:first_reply_created_at, nil)
+    update(first_reply_created_at: nil)
   end
 
   def execute_after_update_commit_callbacks

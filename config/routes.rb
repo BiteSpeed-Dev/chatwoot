@@ -348,6 +348,14 @@ Rails.application.routes.draw do
               get :bot_metrics
             end
           end
+          resources :custom_reports, only: [:index] do
+            collection do
+              get :agents_overview
+              get :agent_wise_conversation_states
+              post :download_agents_overview
+              post :download_agent_wise_conversation_states
+            end
+          end
         end
       end
     end

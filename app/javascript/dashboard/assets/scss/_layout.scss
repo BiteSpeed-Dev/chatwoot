@@ -28,6 +28,10 @@ body {
   .button--fixed-top {
     @apply fixed ltr:right-2 rtl:left-2 top-2 flex flex-row;
   }
+
+  .button--fixed-right {
+    @apply fixed ltr:right-4 rtl:left-4 flex flex-row;
+  }
 }
 
 .banner + .app-wrapper {
